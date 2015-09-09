@@ -2,17 +2,17 @@
   var wrap = function(utils) {
     var Board = function() {
       this.cells = [
-        [0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0]
+        utils.fillArr(utils.EMPTY, 3),
+        utils.fillArr(utils.EMPTY, 6),
+        utils.fillArr(utils.EMPTY, 7),
+        utils.fillArr(utils.EMPTY, 8),
+        utils.fillArr(utils.EMPTY, 9),
+        utils.fillArr(utils.EMPTY, 8),
+        utils.fillArr(utils.EMPTY, 9),
+        utils.fillArr(utils.EMPTY, 8),
+        utils.fillArr(utils.EMPTY, 7),
+        utils.fillArr(utils.EMPTY, 6),
+        utils.fillArr(utils.EMPTY, 3),
       ];
     };
 
@@ -30,6 +30,10 @@
       setCell: function(diag, vert, value) {
         var modVert = utils.validatePoint(diag, vert);
         this.cells[diag][modVert] = value;
+      },
+      getCell: function(diag, vert) {
+        var modVert = utils.validatePoint(diag, vert);
+        return this.cells[diag][modVert];
       }
     };
 

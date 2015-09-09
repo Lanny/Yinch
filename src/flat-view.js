@@ -4,9 +4,11 @@
       return theta * (Math.PI*2)/360;
     };
 
-    var FlatView = function(canvas, board) {
-      this.board = board;
+    var FlatView = function(canvas, board, game) {
       this.canvas = canvas;
+      this.board = board;
+      this.game = game;
+
       this.ctx = canvas.getContext('2d');
       this.unitSize = Math.min(this.canvas.height, this.canvas.width) / 9;
 
@@ -75,6 +77,12 @@
 
       this.bgColor = '#000';
       this.fgColor = '#0F0';
+
+      this.playerColors = {};
+      this.playerColors[utils.WHITE] = '#FFF';
+      this.playerColors[utils.BLACK] = '#333';
+
+      this.canvas.addEventListener('click', this.onClick.bind(this));
     };
 
     FlatView.prototype = {
@@ -83,6 +91,45 @@
         var y = this.diagStarts[diag][1] + (this.sin * (vert - utils.offsets[diag]) * this.unitSize);
 
         return [x, y];
+      },
+      XYToGridPos: function(x, y) {
+        var vert = null;
+        var diag = null;
+        var i;
+
+        for (i=0; i<this.vertStarts.length; i++) {
+          var considerX = this.vertStarts[i][0];
+
+          if (Math.abs(considerX - x) < this.unitSize * this.sin) {
+            vert = i;
+          }
+        }
+
+        for (i=0; i<this.diagStarts.length; i++) {
+          var considerY = this.diagStarts[i][1] + (this.sin *
+            (vert - utils.offsets[i]) * this.unitSize);
+
+          if (Math.abs(considerY - y) < this.unitSize/2) {
+            diag = i;
+            break;
+          }
+        }
+
+        if ((vert === null || diag === null) && false) {
+          return null;
+        }
+
+        this.ctx.beginPath();
+
+        return [diag, vert];
+      },
+      startRenderLoop: function() {
+        // Only render once, we'll rely on onStateChange to keep the view up
+        // to date.
+        this.render();
+      },
+      onStateChange: function() {
+        this.render();
       },
       render: function() {
         var self = this;
@@ -140,13 +187,28 @@
         var x = xy[0];
         var y = xy[1];
 
-        if (value === utils.WHITE_TILE) {
+        if ((value & utils.TYPE_MASK) === utils.TILE) {
           this.ctx.beginPath();
-          this.ctx.fillStyle = '#FFF';
+          this.ctx.fillStyle = this.playerColors[value & utils.PLAYER_MASK];
           this.ctx.arc(x, y, this.tileSize, 0, Math.PI*2);
           this.ctx.fill();
           this.ctx.stroke();
+        } else if ((value & utils.TYPE_MASK) === utils.RING) {
+          this.ctx.beginPath();
+          this.ctx.strokeStyle = this.playerColors[value & utils.PLAYER_MASK];
+          this.ctx.strokeWidth = this.unitWidth / 15;
+          this.ctx.arc(x, y, this.tileSize + this.unitWidth / 15, 0, Math.PI*2);
+          this.ctx.stroke();
         }
+      },
+      onClick: function(e) {
+        var gridPos = this.XYToGridPos(e.clientX, e.clientY);
+
+        if (gridPos === null) {
+          return;
+        }
+
+        this.game.onBoardClick.apply(this.game, gridPos);
       }
     };
 
