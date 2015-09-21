@@ -138,6 +138,7 @@
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.ctx.strokeStyle = this.fgColor;
+        this.ctx.lineWidth = 1;
 
         var sx, sy, ex, ey, i;
 
@@ -177,7 +178,7 @@
         }
 
         this.board.iter(function(value, diag, vert) {
-          if (value !== 0) {
+          if (value !== utils.EMPTY) {
             self.drawPiece(value, diag, vert);
           }
         });
@@ -194,10 +195,11 @@
           this.ctx.fill();
           this.ctx.stroke();
         } else if ((value & utils.TYPE_MASK) === utils.RING) {
-          this.ctx.beginPath();
           this.ctx.strokeStyle = this.playerColors[value & utils.PLAYER_MASK];
-          this.ctx.strokeWidth = this.unitWidth / 15;
-          this.ctx.arc(x, y, this.tileSize + this.unitWidth / 15, 0, Math.PI*2);
+          this.ctx.lineWidth = 6;
+
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, this.tileSize, 0, Math.PI*2);
           this.ctx.stroke();
         }
       },

@@ -6,10 +6,7 @@
       onBoardClick: function(diag, vert) {
         var val = this.board.getCell(diag, vert);
 
-        console.log('bla');
         if (val === utils.EMPTY) {
-          console.log('blue');
-          console.log(this.curPlayer() | utils.RING);
           this.board.setCell(diag, vert, this.curPlayer() | utils.RING);
 
           if (this.curPlayer() === utils.BLACK) {
@@ -19,7 +16,6 @@
           }
 
           if (this.blackRingsPlaced === 5 && this.whiteRingsPlaced === 5) {
-            console.log('DONE!');
             this.state = utils.WHITE | utils.RING_PICK;
           } else {
             // Still ringpick, flip player
