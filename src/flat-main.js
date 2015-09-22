@@ -4,6 +4,7 @@
       domReady(function() {
         var canvas = document.getElementById('primaryCanvas');
         var myGame = new Game(canvas);
+        gg = myGame;
 
         myGame.start();
       });

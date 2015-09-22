@@ -11,8 +11,6 @@
     utils.RING = 2;
     utils.TILE = 0;
 
-    utils.EMPTY = 3;
-
     utils.RING_PLACEMENT = 1 << 1;
     utils.RING_PICK = 2 << 1;
     utils.RING_MOVE = 3 << 1;
@@ -53,6 +51,10 @@
       }
 
       return modVert;
+    };
+
+    utils.notifyPlayer = function(msg, player) {
+      alert(msg);
     };
 
     return utils;
