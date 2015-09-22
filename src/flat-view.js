@@ -75,12 +75,16 @@
         [this.cos * 6 * this.unitSize, (5 + 8 * this.sin) * this.unitSize],
       ];
 
-      this.bgColor = '#000';
-      this.fgColor = '#0F0';
+      this.bgColor = '#888';
+      this.fgColor = '#000';
 
       this.playerColors = {};
       this.playerColors[utils.WHITE] = '#FFF';
-      this.playerColors[utils.BLACK] = '#333';
+      this.playerColors[utils.BLACK] = '#000';
+
+      this.lipColors = {};
+      this.lipColors[utils.WHITE] = '#7EC0EE';
+      this.lipColors[utils.BLACK] = '#7EC0EE';
 
       this.canvas.addEventListener('click', this.onClick.bind(this));
     };
@@ -191,6 +195,8 @@
         if ((value & utils.TYPE_MASK) === utils.TILE) {
           this.ctx.beginPath();
           this.ctx.fillStyle = this.playerColors[value & utils.PLAYER_MASK];
+          this.ctx.strokeStyle = this.lipColors[value & utils.PLAYER_MASK];
+          this.ctx.lineWidth = 2;
           this.ctx.arc(x, y, this.tileSize, 0, Math.PI*2);
           this.ctx.fill();
           this.ctx.stroke();
