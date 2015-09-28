@@ -57,13 +57,24 @@
         var diagDelta = diag - this.anchorDiag;
         var vertDelta = vert - this.anchorVert;
 
-        if (diagDelta !== 0 &&
-            vertDelta !== 0 &&
-            Math.abs(diagDelta) !== Math.abs(vertDelta)) {
+        console.log('diag:', diagDelta);
+        console.log('vert:', vertDelta);
 
-          utils.notifyPlayer('You must move in a straight line.',
-                             this.curPlayer());
-          return;
+        if (diagDelta !== 0 &&
+            vertDelta !== 0) {
+          // Maybe vertical
+          if (Math.abs(diagDelta) !== Math.abs(vertDelta)) {
+            utils.notifyPlayer('You must move in a straight line.',
+                               this.curPlayer());
+            return;
+          }
+
+          if (Math.sign(diagDelta) !== Math.sign(vertDelta)) {
+            utils.notifyPlayer('You must move in a straight line.',
+                               this.curPlayer());
+            return;
+          }
+
         }
 
         var destVal = this.board.getCell(diag, vert);
