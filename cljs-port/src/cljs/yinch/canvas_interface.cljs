@@ -1,15 +1,10 @@
-(ns yinch.canvas-interface)
+(ns yinch.canvas-interface
+  (:use [yinch.utils :only [π cos sin abs half]])
+  (:require [yinch.board :as board]))
 
 (enable-console-print!)
 
 (def bgColor "#888")
-
-; Just for ease of use
-(def π (aget js/Math "PI"))
-(defn- cos [x] (.cos js/Math x))
-(defn- sin [x] (.sin js/Math x))
-(defn- abs [x] (.abs js/Math x))
-(defn- half [x] (/ x 2))
 
 (def ^:dynamic *canvas* nil)
 (def ^:dynamic *ctx* nil)
@@ -17,16 +12,6 @@
 (def ^:dynamic *canvas-width* 800)
 (def ^:dynamic *canvas-height* 600)
 (def ^:dynamic *unit-size* (/ (min *canvas-width* *canvas-height*) 9))
-
-(def axis-lengths
-  "The number of points along each of the axies"
-  [3 6 7 8 9 8 9 8 7 6 3])
-
-(def major-names
-  ["1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12"])
-
-(def minor-names
-  ["a" "b" "c" "d" "e" "f" "g" "h" "i" "j0" "j" "k"])
 
 (defn- rect!
   "Draw a solid colored rectangle between top left point (x1, y1) and bottom
@@ -76,7 +61,7 @@
                       (+ center-y))]
     (loop [cx cxInitial
            cy cyInitial
-           [line-length & remaining] axis-lengths]
+           [line-length & remaining] board/axis-lengths]
       (let [half-x-run (* (cos θ) (half line-length) *unit-size*)
             half-y-run (* (sin θ) (half line-length) *unit-size*)
             x1 (+ cx half-x-run)
@@ -99,25 +84,20 @@
         l2l-dist (* (cos (/ π 6)) *unit-size*)
         d-major (- major 5)
         d-minor (- minor 5)]
-    (print d-major d-minor)
     [(+ center-x 
         (* d-minor l2l-dist))
      (- center-y
         (* d-major *unit-size*)
-        (* (abs d-minor) (sin (/ π 6)) *unit-size*))]))
+        (* (* -1 d-minor) (sin (/ π 6)) *unit-size*))]))
 
 (defn- draw-pieces!
   ""
   []
-  (apply mark! (grid->screen [1 1]))
-  (apply mark! (grid->screen [5 5]))
-  (let [[x y] (grid->screen [1 1])]
-    (print "2 a -> " x y))
   (doall
-    (for [major axis-lengths
-          minor axis-lengths]
-      (let [[x y] nil];(grid->screen [major minor])]
-        #_(mark! x y)))))
+    (board/for-cell
+      (fn [major minor]
+        (let [[x y] (grid->screen [major minor])]
+          (mark! x y))))))
 
 (defn init-canvas!
   "Creates a new canvas/context pair given a canvas ID"

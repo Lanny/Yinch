@@ -3,4 +3,4 @@
 
 (let [canvas-data (ci/init-canvas! "primaryCanvas")]
   (ci/draw-board! nil canvas-data)
-  (js/console.log "bla!!"))
+  (js/console.log "bla!!!"))
