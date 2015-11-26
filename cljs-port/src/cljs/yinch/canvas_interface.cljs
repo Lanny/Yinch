@@ -12,7 +12,7 @@
 (def ^:dynamic *ctx* nil)
 (def ^:dynamic *canvas-width* 800)
 (def ^:dynamic *canvas-height* 600)
-(def ^:dynamic *unit-size* 50);(/ (min *canvas-width* *canvas-height*) 9))
+(def ^:dynamic *unit-size* (/ (min *canvas-width* *canvas-height*) 9))
 
 (def axis-lengths
   "The number of points along each of the axies"
@@ -47,13 +47,13 @@
   (let [center-x (half *canvas-width*)
         center-y (half *canvas-height*)
         θ* (+ θ (half π))
-        cxInitial (-> (* 5 *unit-size*) ; distance from center to edge
+        l2l-dist (* (cos (/ π 6)) *unit-size*) ; distance between parallels 
+        cxInitial (-> (* 5 l2l-dist) ; distance from center to edge
                       (* (cos θ*)) ; the x component thereof
                       (+ center-x)) ; from distance to position on screen
-        cyInitial (-> (* 5 *unit-size*)
+        cyInitial (-> (* 5 l2l-dist)
                       (* (sin θ*))
                       (+ center-y))]
-    (js/console.log center-x center-y cxInitial cyInitial)
     (loop [cx cxInitial
            cy cyInitial
            [line-length & remaining] axis-lengths]
@@ -63,12 +63,11 @@
             y1 (+ cy half-y-run)
             x2 (- cx half-x-run)
             y2 (- cy half-y-run)]
-        (mark! cx cy)
         (line! "#000" 1 x1 y1 x2 y2))
 
       (if (seq remaining)
-        (recur (- cx (* (cos θ*) *unit-size* (cos (/ π 6))))
-               (- cy (* (sin θ*) *unit-size* (cos (/ π 6))))
+        (recur (- cx (* (cos θ*) l2l-dist))
+               (- cy (* (sin θ*) l2l-dist))
                remaining)))))
 
 (defn init-canvas!
@@ -88,6 +87,5 @@
             *ctx* (:ctx canvas-data)]
     (rect! bgColor 0 0 *canvas-width* *canvas-height*)
     (draw-axis-set! (/ π 6))
-    ;(draw-axis-set! (* -1 (/ π 6)))
-    (draw-axis-set! (/ π 2))
-    ))
+    (draw-axis-set! (* -1 (/ π 6)))
+    (draw-axis-set! (/ π 2))))
