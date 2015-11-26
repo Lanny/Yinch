@@ -12,13 +12,13 @@
   right point (x2, y2)."
   [color x1 y1 x2 y2]
   (aset ctx "fillStyle" color)
-  (.fillRect ctx 0 0 width height))
+  (.fillRect ctx 0 0 canvas-width canvas-height))
 
 (defn init-canvas!
   "Creates a new canvas/context pair given a canvas ID."
   [canvas-id]
   (let [element (.getElementById js/document canvas-id)
-        ctx (.getContext element "2d")]
+        ctx nil ];#_(.getContext element "2d")]
     {:element element
      :ctx ctx
      ; TODO: Don't hardcode these
@@ -27,7 +27,7 @@
 
 (defn draw-board!
   [board canvas-data]
-  (with-bindingz {#'canvas (:element canvas-data)
+  (with-bindings {#'canvas (:element canvas-data)
                   #'ctx (:ctx canvas-data)}
     (rect bgColor 0 0 canvas-width canvas-height)))
 
