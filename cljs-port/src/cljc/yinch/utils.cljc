@@ -19,4 +19,6 @@
 
 (defn half [x] (/ x 2))
 
+(def other {:black :white :white :black})
+
 
