@@ -3,14 +3,17 @@
   :url "https://github.com/RyanJenkins/Yinch"
   :license {:name "GNU General Public License, version 2"
             :url "https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt"}
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "0.0-3211"
                                     :exclusions [org.apache.ant/ant]]
-                 [compojure "1.1.6"]]
+                 [compojure "1.1.6"]
+                 [com.aphyr/prism "0.1.3"]]
   :plugins [[lein-cljsbuild "1.1.1"]
-            [lein-ring "0.8.7"]]
+            [lein-ring "0.8.7"]
+            [com.aphyr/prism "0.1.3"]]
   :hooks [leiningen.cljsbuild]
-  :source-paths ["src/clj"]
+  :source-paths ["src/clj"
+                 "src/cljc"]
   :profiles {:cljs-repl {:main ^:skip-aot yinch.repl}}
   :aliases {"cljs-repl" ["with-profile" "cljs-repl" "run"]}
   :ring {:handler yinch.routes/app}
