@@ -5,13 +5,31 @@
 (enable-console-print!)
 
 (def bgColor "#888")
+(def border 80)
 
 (def ^:dynamic *canvas* nil)
 (def ^:dynamic *ctx* nil)
 (def ^:dynamic *label* true)
 (def ^:dynamic *canvas-width* 800)
 (def ^:dynamic *canvas-height* 600)
-(def ^:dynamic *unit-size* (/ (min *canvas-width* *canvas-height*) 9))
+(def ^:dynamic *unit-size* (/ (min (- *canvas-width* border)
+                                   (- *canvas-height* border))
+                              9))
+
+(defn- grid->screen
+  "Takes a grid [major minor] (number, letter) coord pair and returns a screen
+  [x y] position"
+  [[major minor]]
+  (let [center-x (half *canvas-width*)
+        center-y (half *canvas-height*)
+        l2l-dist (* (cos (/ π 6)) *unit-size*)
+        d-major (- major 5)
+        d-minor (- minor 5)]
+    [(+ center-x 
+        (* d-minor l2l-dist))
+     (- center-y
+        (* d-major *unit-size*)
+        (* (* -1 d-minor) (sin (/ π 6)) *unit-size*))]))
 
 (defn- rect!
   "Draw a solid colored rectangle between top left point (x1, y1) and bottom
@@ -42,7 +60,8 @@
   ([x y text color size] (text! x y text color size "sans-serif"))
   ([x y text color size style]
    (aset *ctx* "fillStyle" color)
-   (aset *ctx* "font" (str size "% " style))
+   (aset *ctx* "font" (str size "px " style))
+   (print (aget *ctx* "font"))
    (.fillText *ctx* text x y)))
 
 (defn- draw-axis-set!
@@ -75,21 +94,6 @@
                (- cy (* (sin θ*) l2l-dist))
                remaining)))))
 
-(defn- grid->screen
-  "Takes a grid [major minor] (number, letter) coord pair and returns a screen
-  [x y] position"
-  [[major minor]]
-  (let [center-x (half *canvas-width*)
-        center-y (half *canvas-height*)
-        l2l-dist (* (cos (/ π 6)) *unit-size*)
-        d-major (- major 5)
-        d-minor (- minor 5)]
-    [(+ center-x 
-        (* d-minor l2l-dist))
-     (- center-y
-        (* d-major *unit-size*)
-        (* (* -1 d-minor) (sin (/ π 6)) *unit-size*))]))
-
 (defn- draw-pieces!
   ""
   []
@@ -97,7 +101,26 @@
     (board/for-cell
       (fn [major minor]
         (let [[x y] (grid->screen [major minor])]
-          (mark! x y))))))
+          nil)))))
+
+(defn- annotate-board!
+  "Draws the 1-11 a-k annotations around the perimeter of the board"
+  ([] (annotate-board! "#000"
+                       14
+                       "sans-serif"))
+  ([color size style]
+   (doall
+     (for [major (range 11)]
+       (let [[x y] (grid->screen [major (board/axis-staggers major)])]
+         (text! (- x (/ *unit-size* 6) size)
+                (- y (/ *unit-size* 6))
+                (board/major-names major) color size style))))
+   (doall
+    (for [minor (range 11)]
+       (let [[x y] (grid->screen [(board/axis-staggers minor) minor])]
+         (text! (- x (/ size 4))
+                (+ y (/ *unit-size* 2) -3)
+                (board/minor-names minor) color size style))))))
 
 (defn init-canvas!
   "Creates a new canvas/context pair given a canvas ID"
@@ -118,5 +141,5 @@
     (draw-axis-set! (/ π 6))
     (draw-axis-set! (* -1 (/ π 6)))
     (draw-axis-set! (/ π 2))
-    (draw-pieces!)
-    ))
+    (annotate-board!)
+    (draw-pieces!)))
