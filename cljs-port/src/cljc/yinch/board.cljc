@@ -1,4 +1,5 @@
-(ns yinch.board)
+(ns yinch.board
+  (:use [yinch.utils :only [signum]]))
 
 (def axis-lengths
   "The number of edges along each of the axies."
@@ -30,7 +31,9 @@
   "Returns true if cell (major, minor) exists on a (platonic) Yinsh board.
   false otherwise."
   [major minor]
-  (and (>= minor (axis-staggers major))
+  (and (contains? axis-staggers major)
+       (contains? axis-staggers minor)
+       (>= minor (axis-staggers major))
        (<= minor
            (+ (axis-lengths major) (axis-staggers major)))))
 
@@ -42,6 +45,43 @@
       #?(:clj (Exception. (format "(%d, %d) is not a valid cell."
                             major minor))
          :cljs (str "(" major ", " minor ") is not a valid cell.")))))
+
+(defn line-valid?
+  "Returns true if there is a straight line on a Yinch board between the given
+  pair of cells designated by [major minor] pairs."
+  [start end]
+  (let [[start-major start-minor] start
+        [end-major end-minor] end
+        major-delta (- end-major start-major)
+        minor-delta (- end-minor start-minor)]
+    (and (apply cell-valid? start) ; Gotta be valid cels
+         (apply cell-valid? end)
+         (not (= start end)) ; A line must have a length
+         (or ; Traversal may be along a major/minor axis (first case) or
+             ; a contra-axis (second case)
+           (or (zero? major-delta)
+               (zero? minor-delta))
+           (and (= major-delta minor-delta) ; No possible uneven contra-diag move
+                (= (signum major-delta) (signum minor-delta)))))))
+
+(defn flip-cell
+  "Returns the board with the cell at (major, minor) set to the opposite color.
+  It is an error to flip a cell of any type other than :tile"
+  [board major minor]
+  (check-cell major minor)
+  (let [row (board major)
+        cell (row minor)
+        cell-type (:type cell)]
+    (if (not= cell-type :tile)
+      #?(:clj (Exception.
+                (format "(%d, %d) is of type :%s, must be of type :tile."
+                  major minor (str cell-type)))
+         :cljs (str "(" major ", " minor ") is of type :" cell-type
+                    "must be of type :tile."))
+      (->> (if (= (:color cell) :white) :black :white)
+           (assoc cell :color)
+           (assoc row minor)
+           (assoc board major)))))
 
 (defn get-cell
   "Returns the cell stored in board at position (major, minor)."
