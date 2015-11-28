@@ -69,7 +69,7 @@
         :reason "Not a valid board position."}
        game]
     (not= player (:turn game))
-      [{:status :failed
+      [{:status :failure
         :reason "Not your turn."}
        game]
     (= (:phase game) :ring-placement)

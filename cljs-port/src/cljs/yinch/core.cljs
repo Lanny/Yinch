@@ -20,7 +20,7 @@
             (reader/read-string)
             (start)))))
   ([game]
-   (let [[state-chan interaction-chan] (ci/start-rendering!)]
+   (let [[state-chan status-chan interaction-chan] (ci/start-rendering!)]
      (async/put! state-chan game)
      (go
        (loop [interaction (async/<! interaction-chan)
@@ -32,5 +32,6 @@
                                                current-state
                                                (:click-info interaction))]
                  (async/put! state-chan new-state)
+                 (async/put! status-chan status)
                  (recur (async/<! interaction-chan) new-state)))
            (print "Unexpected interaction:"  interaction)))))))

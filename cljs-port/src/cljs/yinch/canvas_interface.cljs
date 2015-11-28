@@ -209,6 +209,21 @@
         (draw-board! new-state canvas-data)
         (recur (async/<! state-chan))))))
 
+(defn consume-status!
+  ""
+  [status-chan]
+  (go
+    (loop [status (async/<! status-chan)]
+      (case (:status status)
+        :success
+          nil
+        :failure
+          (js/alert (:reason status))
+        :error
+          (js/alert "Yo, the programmer messed up real bad.")
+        (throw (str "Unexpected status" status)))
+      (recur (async/<! status-chan)))))
+
 (defn pump-interaction!
   "Binds event listeners, translates them into user actions (generally clicks
   on the board) and pumps puts them to `interaction-chan`."
@@ -222,12 +237,14 @@
                                       :click-info [:black major minor]})))))
 
 (defn start-rendering!
-  "Init canvas and return a pair of channels for communicating state and
-  receiving user interactions."
+  "Init canvas and return a 3-vec of channels for communicating state, status,
+  and receiving user interactions."
   []
   (let [state-chan (async/chan)
+        status-chan (async/chan)
         interaction-chan (async/chan)]
     (consume-state! state-chan) 
+    (consume-status! status-chan)
     (pump-interaction! interaction-chan)
-    [state-chan interaction-chan]))
+    [state-chan status-chan interaction-chan]))
 
