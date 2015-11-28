@@ -56,7 +56,7 @@
       [{:status :success}
        (assoc game :highlight-cell [major minor])])))
 
-(defn drop-ring [] nil)
+(defn drop-ring [game player major minor] nil)
 
 (defn intrepret-click
   "Takes a game, player indication, and grid position and returns a pair

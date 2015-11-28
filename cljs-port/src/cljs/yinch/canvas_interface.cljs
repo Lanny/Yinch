@@ -1,7 +1,9 @@
 (ns yinch.canvas-interface
   (:require [yinch.board :as board]
-            [cljs.core.async :as async])
-  (:require-macros [cljs.core.async.macros :refer [go]])
+            [cljs.core.async :as async]
+            [dommy.core :as dommy])
+  (:require-macros [cljs.core.async.macros :refer [go]]
+                   [dommy.core :refer [sel sel1]])
   (:use [yinch.utils :only [π cos sin abs half]]))
 
 (enable-console-print!)
@@ -23,18 +25,43 @@
 
 (defn- grid->screen
   "Takes a grid [major minor] (number, letter) coord pair and returns a screen
-  [x y] position"
+  [x y] position (relative to canvas top left)."
   [[major minor]]
   (let [center-x (half *canvas-width*)
         center-y (half *canvas-height*)
         l2l-dist (* (cos (/ π 6)) *unit-size*)
         d-major (- major 5)
         d-minor (- minor 5)]
+    ; x = center-x + d-minor * l2l-dist
+    ; x - center-x = d-minor * l2l-dist
+    ; (x - center-x) / l2l-dist = d-minor
+
+    ; y = center-y - (d-major * unit-size) + (d-minor * sin(π/6) * unit-size)
+    ; y - (d-minor * sin(π/6) * unit-size) = center-y - (d-major * unit-size)
+    ; y - (d-minor * sin(π/6) * unit-size) - center-y = 0 - (d-major * unit-size)
+    ; -y + (d-minor * sin(π/6) * unit-size) + center-y = d-major * unit-size
+    ; (-y + (d-minor * sin(π/6) * unit-size) + center-y) / unit-size = d-major
     [(+ center-x 
         (* d-minor l2l-dist))
      (- center-y
         (* d-major *unit-size*)
         (* (* -1 d-minor) (sin (/ π 6)) *unit-size*))]))
+
+(defn- screen->grid
+  "Takes a screen x, y position (relative to canvas top left) and returns a
+  grid position [major, minor] (both 0-indicies)."
+  [[x y]]
+  (let [center-x (half *canvas-width*)
+        center-y (half *canvas-height*)
+        l2l-dist (* (cos (/ π 6)) *unit-size*)
+        dx (- x center-x)
+        dy (- y center-y)
+        d-minor (/ dx l2l-dist)
+        d-major (/ (+ (* d-minor (sin (/ π 6)) *unit-size*)
+                      (- center-y y))
+                   *unit-size*)]
+    [(.round js/Math (+ 5 d-major))
+     (.round js/Math (+ 5 d-minor))]))
 
 (defn- rect!
   "Draw a solid colored rectangle between top left point (x1, y1) and bottom
@@ -127,7 +154,9 @@
                            (:white piece-colors))
             :ring (circle! x y *tile-size* 6
                            (:white piece-colors))
-            :empty nil))))))
+            :empty nil
+            (do
+              (throw (str "Unexpected cell type. Cell:" cell)))))))))
 
 (defn- annotate-board!
   "Draws the 1-11 a-k annotations around the perimeter of the board"
@@ -181,10 +210,20 @@
         (recur (async/<! state-chan))))))
 
 (defn pump-interaction!
-  [interaction-chan])
+  "Binds event listeners, translates them into user actions (generally clicks
+  on the board) and pumps puts them to `interaction-chan`."
+  [interaction-chan]
+  (dommy/listen! (sel1 :#primaryCanvas) :click
+    (fn [e]
+      (let [x (aget e "layerX")
+            y (aget e "layerY")
+            [major minor] (screen->grid [x y])]
+        (async/put! interaction-chan {:type :grid-click
+                                      :click-info [:black major minor]})))))
 
 (defn start-rendering!
-  "Init canvas"
+  "Init canvas and return a pair of channels for communicating state and
+  receiving user interactions."
   []
   (let [state-chan (async/chan)
         interaction-chan (async/chan)]

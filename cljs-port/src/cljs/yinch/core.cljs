@@ -28,9 +28,9 @@
          (case (:type interaction)
            :grid-click
              (do
-               (let [new-state (apply game/intrepret-click 
-                                      current-state
-                                      (:click-info grid-click))]
+               (let [[status new-state] (apply game/intrepret-click
+                                               current-state
+                                               (:click-info interaction))]
                  (async/put! state-chan new-state)
                  (recur (async/<! interaction-chan) new-state)))
            (print "Unexpected interaction:"  interaction)))))))
