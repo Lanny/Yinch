@@ -1,6 +1,8 @@
 (ns yinch.canvas-interface
-  (:use [yinch.utils :only [π cos sin abs half]])
-  (:require [yinch.board :as board]))
+  (:require [yinch.board :as board]
+            [cljs.core.async :as async])
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:use [yinch.utils :only [π cos sin abs half]]))
 
 (enable-console-print!)
 
@@ -167,3 +169,26 @@
     (draw-axis-set! (/ π 2))
     (annotate-board!)
     (draw-pieces! game)))
+
+(defn consume-state!
+  "Listens on a chan for game state updates until the chan is closed. Updates
+  the screen for each state change."
+  [state-chan]
+  (go
+    (let [canvas-data (init-canvas! "primaryCanvas")]
+      (loop [new-state (async/<! state-chan)]
+        (draw-board! new-state canvas-data)
+        (recur (async/<! state-chan))))))
+
+(defn pump-interaction!
+  [interaction-chan])
+
+(defn start-rendering!
+  "Init canvas"
+  []
+  (let [state-chan (async/chan)
+        interaction-chan (async/chan)]
+    (consume-state! state-chan) 
+    (pump-interaction! interaction-chan)
+    [state-chan interaction-chan]))
+

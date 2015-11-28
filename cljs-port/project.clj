@@ -6,6 +6,7 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "0.0-3211"
                                     :exclusions [org.apache.ant/ant]]
+                 [org.clojure/core.async "0.2.374"]
                  [compojure "1.1.6"]
                  [com.aphyr/prism "0.1.3"]
                  [com.cemerick/url "0.1.1"]]
