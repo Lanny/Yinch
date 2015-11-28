@@ -7,11 +7,12 @@
                  [org.clojure/clojurescript "0.0-3211"
                                     :exclusions [org.apache.ant/ant]]
                  [compojure "1.1.6"]
-                 [com.aphyr/prism "0.1.3"]]
+                 [com.aphyr/prism "0.1.3"]
+                 [com.cemerick/url "0.1.1"]]
   :plugins [[lein-cljsbuild "1.1.1"]
             [lein-ring "0.8.7"]
             [com.aphyr/prism "0.1.3"]]
-  :hooks [leiningen.cljsbuild]
+  ;:hooks [leiningen.cljsbuild]
   :source-paths ["src/clj"
                  "src/cljc"]
   :profiles {:cljs-repl {:main ^:skip-aot yinch.repl}}
@@ -23,7 +24,7 @@
                          "http://localhost:3000/repl.html"
                          :stdout ".repl-chrome-out"
                          :stderr ".repl-chrome-err"] }
-              :builds [{:source-paths ["src/cljs"]
+              :builds [{:source-paths ["src/cljs" "src/cljc"]
                         :compiler {:output-dir "resources/public/js"
                                    :output-to "resources/public/js/main.js"
                                    :source-map "resources/public/js/main.map.js"

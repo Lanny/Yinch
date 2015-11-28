@@ -1,6 +1,19 @@
 (ns yinch.game
-  (:require [yinch.board :as board])
+  (:require [yinch.board :as board]
+            [cemerick.url :as url])
   (:use [yinch.utils :only [other]]))
+
+(defn urlize
+  "Returns a url for viewing a game state."
+  ([board]
+   (urlize board "http://localhost:3000"))
+  ([board base]
+   (->> board
+        (prn-str)        ; to edn
+        (url/url-encode) ; to something we can throw in a hash
+        (assoc (url/url base "index.html")
+               :anchor)  ; to composed url
+        (str))))         ; to string
 
 (defn new-game
   "Creates a new game map in the initial state (ring placement, white starts)."

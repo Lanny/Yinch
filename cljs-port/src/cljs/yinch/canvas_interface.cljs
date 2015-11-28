@@ -61,7 +61,6 @@
   ([x y text color size style]
    (aset *ctx* "fillStyle" color)
    (aset *ctx* "font" (str size "px " style))
-   (print (aget *ctx* "font"))
    (.fillText *ctx* text x y)))
 
 (defn- draw-axis-set!
@@ -96,12 +95,14 @@
 
 (defn- draw-pieces!
   ""
-  []
+  [game]
   (doall
     (board/for-cell
       (fn [major minor]
-        (let [[x y] (grid->screen [major minor])]
-          nil)))))
+        (let [[x y] (grid->screen [major minor])
+              cell (get-in game [:board major minor])]
+          (if (not= (:type cell) :empty)
+            (mark! x y)))))))
 
 (defn- annotate-board!
   "Draws the 1-11 a-k annotations around the perimeter of the board"
@@ -134,7 +135,7 @@
      :height 600 }))
 
 (defn draw-board!
-  [board canvas-data]
+  [game canvas-data]
   (binding [*canvas* (:element canvas-data)
             *ctx* (:ctx canvas-data)]
     (rect! bgColor 0 0 *canvas-width* *canvas-height*)
@@ -142,4 +143,4 @@
     (draw-axis-set! (* -1 (/ π 6)))
     (draw-axis-set! (/ π 2))
     (annotate-board!)
-    (draw-pieces!)))
+    (draw-pieces! game)))

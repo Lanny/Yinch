@@ -21,4 +21,12 @@
 
 (def other {:black :white :white :black})
 
+(defn pnr
+  "Prints x argument and returns it unmodified. Useful for inspecting
+  intermediary values in long arrow chains."
+  [x]
+  (println x)
+  x)
+
+
 
