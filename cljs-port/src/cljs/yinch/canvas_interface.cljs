@@ -4,8 +4,10 @@
 
 (enable-console-print!)
 
-(def bgColor "#888")
+(def bg-color "#888")
 (def border 80)
+(def piece-colors {:black "#000" :white "#FFF"})
+(def lip-colors {:black "#7EC0EE" :white "#7EC0EE"})
 
 (def ^:dynamic *canvas* nil)
 (def ^:dynamic *ctx* nil)
@@ -15,6 +17,7 @@
 (def ^:dynamic *unit-size* (/ (min (- *canvas-width* border)
                                    (- *canvas-height* border))
                               9))
+(def ^:dynamic *tile-size* (* *unit-size* 0.33))
 
 (defn- grid->screen
   "Takes a grid [major minor] (number, letter) coord pair and returns a screen
@@ -48,6 +51,21 @@
   (.moveTo *ctx* x1 y1)
   (.lineTo *ctx* x2 y2)
   (.stroke *ctx*))
+
+(defn- circle!
+  "Draw a circle centered a (x, y), with radius r of color `stroke-color` and
+  thickness `thickness` and optional fill color."
+  ([x y r thickness stroke-color]
+   (circle! x y r thickness stroke-color nil))
+  ([x y r thickness stroke-color fill-color]
+   (.beginPath *ctx*)
+   (aset *ctx* "fillStyle" (if (nil? fill-color) "" fill-color))
+   (aset *ctx* "strokeStyle" stroke-color)
+   (aset *ctx* "lineWidth" thickness)
+   (.arc *ctx* x y r 0 (* π 2))
+   (if (not (nil? fill-color))
+     (.fill *ctx*))
+   (.stroke *ctx*)))
 
 (defn- mark!
   [x y]
@@ -101,8 +119,13 @@
       (fn [major minor]
         (let [[x y] (grid->screen [major minor])
               cell (get-in game [:board major minor])]
-          (if (not= (:type cell) :empty)
-            (mark! x y)))))))
+          (case (:type cell)
+            :tile (circle! x y *tile-size* 2
+                           (:white lip-colors)
+                           (:white piece-colors))
+            :ring (circle! x y *tile-size* 6
+                           (:white piece-colors))
+            :empty nil))))))
 
 (defn- annotate-board!
   "Draws the 1-11 a-k annotations around the perimeter of the board"
@@ -138,7 +161,7 @@
   [game canvas-data]
   (binding [*canvas* (:element canvas-data)
             *ctx* (:ctx canvas-data)]
-    (rect! bgColor 0 0 *canvas-width* *canvas-height*)
+    (rect! bg-color 0 0 *canvas-width* *canvas-height*)
     (draw-axis-set! (/ π 6))
     (draw-axis-set! (* -1 (/ π 6)))
     (draw-axis-set! (/ π 2))
