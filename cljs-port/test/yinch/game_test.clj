@@ -1,7 +1,8 @@
 (ns yinch.game-test
   (:require [clojure.test :refer :all]
             [yinch.board-test :refer [assert-cell]]
-            [yinch.game :refer :all]))
+            [yinch.game :refer :all]
+            [clojure.pprint :refer [pprint]]))
 
 (defn play-script
   ""
@@ -30,23 +31,34 @@
     (is (:turn game) :white)))
 
 (deftest test-integration
-  (let [script-1 [[:white 6 6]
+  (let [script-1 [[:white 6 6]   ; Throw down two rings each.
                   [:black 5 2]
                   [:white 6 7]
                   [:black 7 6]]
-        script-2b1 [[:white 6 8]
+
+        script-2b1 [[:white 6 8] ; All rings get placed, no violations.
                     [:black 2 2]
                     [:white 2 3]
                     [:black 2 4]
                     [:white 2 5]
-                    [:black 2 6]] ; All rings get placed, no violations
-        script-2b2 [[:white 6 8]
-                    [:black 6 6]] ; Black tries to take a white occupied space
-        script-2b3 [[:white 6 6]] ; White tries to take a space twice
+                    [:black 2 6]]
+        script-2b2 [[:white 6 8]  ; Black tries to take a white occupied space.
+                    [:black 6 6]] 
+        script-2b3 [[:white 6 6]] ; White tries to take a space twice.
+
+        script-3b1 [[:black 2 2]] ; Pick a ring, don't drop it.
+        script-3b2 [[:black 6 6]] ; Pick white's ring.
+        script-3b3 [[:black 9 5]] ; Pick an empty position.
+        script-3b4 [[:black 2 2]  ; Pick a ring. Drop it one cell away.
+                    [:black 3 2]]
+
         [status-1 game-1] (play-script script-1)
         [status-2b1 game-2b1] (play-script game-1 script-2b1)
         [status-2b2 game-2b2] (play-script game-1 script-2b2)
-        [status-2b3 game-2b3] (play-script game-1 script-2b3)]
+        [status-2b3 game-2b3] (play-script game-1 script-2b3)
+        [status-3b1 game-3b1] (play-script game-2b1 script-3b1)
+        [status-3b2 game-3b2] (play-script game-2b1 script-3b2)
+        [status-3b3 game-3b3] (play-script game-2b1 script-3b3)]
     (is (= (:status status-1) :success))
     (is (= (:phase game-1) :ring-placement))
     (is (= (:turn game-1) :white))
@@ -63,4 +75,17 @@
 
     (is (= (:status status-2b3) :failure))
     (is (= (:turn game-2b3) :white))
-    (is (= (:rings-placed game-2b3) 4))))
+    (is (= (:rings-placed game-2b3) 4))
+
+    (is (= (:status status-3b1) :success))
+    (is (= (:highlight-cell game-3b1) [2 2]))
+    ; Board should not have changed as a result of a ring pick.
+    (is (= (:board game-2b1) (:board game-3b1)))
+
+    (is (= (:status status-3b2) :failure))
+    (is (= (:turn game-3b2) :black))
+    (is (= (:status status-3b3) :failure))
+    (is (= (:turn game-3b3) :black))
+
+    ;(is (= (get-in board-3b1 [:board 2 2] 
+    ))

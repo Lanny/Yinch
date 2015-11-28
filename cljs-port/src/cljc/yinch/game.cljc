@@ -9,7 +9,7 @@
    :phase :ring-placement
    :turn :white
    :rings-placed 0
-   :hilight-cell nil
+   :highlight-cell nil
    :rings-remaining {:black 5
                      :white 5}})
 
@@ -23,7 +23,7 @@
       (let [updated-game (-> game
                              (update-in [:rings-placed] inc) 
                              (assoc-in [:board major minor] {:type :ring
-                                                            :color player}))]
+                                                             :color player}))]
         (if (>= (:rings-placed updated-game) 10)
           [{:status :success}
            (-> updated-game
@@ -33,7 +33,16 @@
            (-> updated-game
                (assoc :turn (other player)))])))))
 
-(defn pick-ring [] nil)
+(defn pick-ring
+  [game player major minor]
+  (let [cell (board/get-cell (:board game) major minor)]
+    (if (not= cell {:type :ring :color player})
+      [{:status :failure
+        :reason "You can only move rings of your own color."}
+       game]
+      [{:status :success}
+       (assoc game :highlight-cell [major minor])])))
+
 (defn drop-ring [] nil)
 
 (defn intrepret-click
