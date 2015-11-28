@@ -13,6 +13,8 @@
 (def piece-colors {:black "#000" :white "#FFF"})
 (def lip-colors {:black "#7EC0EE" :white "#7EC0EE"})
 
+(def game-state (atom nil))
+
 (def ^:dynamic *canvas* nil)
 (def ^:dynamic *ctx* nil)
 (def ^:dynamic *label* true)
@@ -147,13 +149,14 @@
     (board/for-cell
       (fn [major minor]
         (let [[x y] (grid->screen [major minor])
-              cell (get-in game [:board major minor])]
+              cell (get-in game [:board major minor])
+              color (:color cell)]
           (case (:type cell)
             :tile (circle! x y *tile-size* 2
-                           (:white lip-colors)
-                           (:white piece-colors))
+                           (color lip-colors)
+                           (color piece-colors))
             :ring (circle! x y *tile-size* 6
-                           (:white piece-colors))
+                           (color piece-colors))
             :empty nil
             (do
               (throw (str "Unexpected cell type. Cell:" cell)))))))))
@@ -206,6 +209,7 @@
   (go
     (let [canvas-data (init-canvas! "primaryCanvas")]
       (loop [new-state (async/<! state-chan)]
+        (swap! game-state (fn [old-state] new-state))
         (draw-board! new-state canvas-data)
         (recur (async/<! state-chan))))))
 
@@ -232,9 +236,10 @@
     (fn [e]
       (let [x (aget e "layerX")
             y (aget e "layerY")
-            [major minor] (screen->grid [x y])]
+            [major minor] (screen->grid [x y])
+            player (:turn @game-state)]
         (async/put! interaction-chan {:type :grid-click
-                                      :click-info [:black major minor]})))))
+                                      :click-info [player major minor]})))))
 
 (defn start-rendering!
   "Init canvas and return a 3-vec of channels for communicating state, status,
