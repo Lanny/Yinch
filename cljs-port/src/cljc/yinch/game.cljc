@@ -67,7 +67,7 @@
           [{:status :success}
            (-> updated-game
                (assoc :phase :ring-pick)
-               (assoc :turn player))]
+               (assoc :turn :black))]
           [{:status :success}
            (-> updated-game
                (assoc :turn (other player)))])))))
@@ -97,6 +97,7 @@
        (-> game
            (update-in [:turn] other)
            (assoc :highlight-cell nil)
+           (assoc :phase :ring-pick)
            (assoc-in [:board from-major from-minor :type] :tile)
            (assoc-in [:board major minor] {:type :ring
                                            :color (:turn game)}))])))
