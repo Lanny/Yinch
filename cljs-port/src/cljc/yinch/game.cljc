@@ -1,7 +1,33 @@
 (ns yinch.game
   (:require [yinch.board :as board]
             [cemerick.url :as url])
-  (:use [yinch.utils :only [other]]))
+  (:use [yinch.utils :only [other signum]]))
+
+(defn- line-blocked?
+  "Given a game (containing a start position on :highlight-cell) and a target
+  cell, calculate if it is valid to hop a ring from :highlight-cell to target
+  cell."
+  [game [target-major target-minor]]
+  (let [[source-major source-minor] (:highlight-cell game)
+        board (:board game)
+        major-step (signum (- target-major target-minor))
+        minor-step (signum (- target-major target-minor))]
+    (loop [major source-major
+           minor source-minor
+           hopped false
+           last-occupied false]
+      (cond
+        (= (get-in board [major minor :type]) :ring)
+          false
+        (and (not= (-> board major minor :type) :tile)
+             (not last-occupied)
+             hopped)
+          false
+        :default
+          (recur (+ major major-step)
+                 (+ minor minor-step)
+                 (or hopped (not= (-> board major minor :type) :empty))
+                 (not= (-> board major minor :type) :empty))))))
 
 (defn urlize
   "Returns a url for viewing a game state."
@@ -54,9 +80,26 @@
         :reason "You can only move rings of your own color."}
        game]
       [{:status :success}
-       (assoc game :highlight-cell [major minor])])))
+       (-> game
+           (assoc :highlight-cell [major minor])
+           (assoc :phase :ring-drop))])))
 
-(defn drop-ring [game player major minor] nil)
+(defn drop-ring
+  [game player major minor]
+  (let [[from-major from-minor] (:highlight-cell game)]
+    (if (or (not (board/line-valid? [from-major from-minor] [major minor]))
+            (not= (get-in game [:board major minor :type]) :empty)
+            (line-blocked? game [major minor]))
+      [{:status :failure
+        :reason "Not a valid move."}
+       game]
+      [{:status :success}
+       (-> game
+           (update-in [:turn] other)
+           (assoc :highlight-cell nil)
+           (assoc-in [:board from-major from-minor :type] :tile)
+           (assoc-in [:board major minor] {:type :ring
+                                           :color (:turn game)}))])))
 
 (defn intrepret-click
   "Takes a game, player indication, and grid position and returns a pair

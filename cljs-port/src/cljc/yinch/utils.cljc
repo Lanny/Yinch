@@ -14,7 +14,7 @@
      :cljs (.abs js/Math x)))
 
 (defn signum [x]
-  #?(:clj (Math/signum x)
+  #?(:clj (Math/signum (float x))
      :cljs (.sign js/Math x)))
 
 (defn half [x] (/ x 2))

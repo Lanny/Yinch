@@ -51,6 +51,14 @@
         script-3b3 [[:black 9 5]] ; Pick an empty position.
         script-3b4 [[:black 2 2]  ; Pick a ring. Drop it one cell away.
                     [:black 3 2]]
+        script-3b5 [[:black 2 2]  ; Pick a ring. Drop it two cells away.
+                    [:black 4 2]]
+        script-3b6 [[:black 2 4]  ; Pick a ring. Move contra-diag
+                    [:black 4 6]]
+        script-3b7 [[:black 2 4]  ; Pick a ring. Drop it on an opponent's ring.
+                    [:black 6 8]]
+        script-3b8 [[:black 2 4]  ; Pick a ring. Drop it beyond an opponent's
+                    [:black 6 8]] ; ring.
 
         [status-1 game-1] (play-script script-1)
         [status-2b1 game-2b1] (play-script game-1 script-2b1)
@@ -58,7 +66,12 @@
         [status-2b3 game-2b3] (play-script game-1 script-2b3)
         [status-3b1 game-3b1] (play-script game-2b1 script-3b1)
         [status-3b2 game-3b2] (play-script game-2b1 script-3b2)
-        [status-3b3 game-3b3] (play-script game-2b1 script-3b3)]
+        [status-3b3 game-3b3] (play-script game-2b1 script-3b3)
+        [status-3b4 game-3b4] (play-script game-2b1 script-3b4)
+        [status-3b5 game-3b5] (play-script game-2b1 script-3b5)
+        [status-3b6 game-3b6] (play-script game-2b1 script-3b6)
+        [status-3b7 game-3b7] (play-script game-2b1 script-3b7)
+        [status-3b8 game-3b8] (play-script game-2b1 script-3b8)]
     (is (= (:status status-1) :success))
     (is (= (:phase game-1) :ring-placement))
     (is (= (:turn game-1) :white))
@@ -87,5 +100,21 @@
     (is (= (:status status-3b3) :failure))
     (is (= (:turn game-3b3) :black))
 
-    ;(is (= (get-in board-3b1 [:board 2 2] 
-    ))
+    (is (= (get-in game-3b4 [:board 2 2 :type]) :tile))
+    (is (= (get-in game-3b4 [:board 2 2 :color]) :black))
+    (is (= (get-in game-3b4 [:board 3 2 :type]) :ring))
+    (is (= (get-in game-3b4 [:board 3 2 :color]) :black))
+
+    (is (= (get-in game-3b5 [:board 2 2 :type]) :tile))
+    (is (= (get-in game-3b5 [:board 2 2 :color]) :black))
+    (is (= (get-in game-3b5 [:board 4 2 :type]) :ring))
+    (is (= (get-in game-3b5 [:board 4 2 :color]) :black))
+
+    (is (= (get-in game-3b6 [:board 2 4 :type]) :tile))
+    (is (= (get-in game-3b6 [:board 2 4 :color]) :black))
+    (is (= (get-in game-3b6 [:board 4 6 :type]) :ring))
+    (is (= (get-in game-3b6 [:board 4 6 :color]) :black))
+
+    (is (= (:status status-3b7) :failure))
+
+    (is (= (:status status-3b8) :failure))))
