@@ -1,5 +1,6 @@
 (ns yinch.canvas-interface
   (:require [yinch.board :as board]
+            [yinch.game :as game]
             [cljs.core.async :as async]
             [dommy.core :as dommy])
   (:require-macros [cljs.core.async.macros :refer [go]]
@@ -34,15 +35,6 @@
         l2l-dist (* (cos (/ π 6)) *unit-size*)
         d-major (- major 5)
         d-minor (- minor 5)]
-    ; x = center-x + d-minor * l2l-dist
-    ; x - center-x = d-minor * l2l-dist
-    ; (x - center-x) / l2l-dist = d-minor
-
-    ; y = center-y - (d-major * unit-size) + (d-minor * sin(π/6) * unit-size)
-    ; y - (d-minor * sin(π/6) * unit-size) = center-y - (d-major * unit-size)
-    ; y - (d-minor * sin(π/6) * unit-size) - center-y = 0 - (d-major * unit-size)
-    ; -y + (d-minor * sin(π/6) * unit-size) + center-y = d-major * unit-size
-    ; (-y + (d-minor * sin(π/6) * unit-size) + center-y) / unit-size = d-major
     [(+ center-x 
         (* d-minor l2l-dist))
      (- center-y
@@ -180,6 +172,25 @@
                 (+ y (/ *unit-size* 2) -3)
                 (board/minor-names minor) color size style))))))
 
+
+(defn- draw-highlight!
+  ""
+  [{cell :highlight-cell}]
+  (if (nil? cell)
+    nil
+    (let [[major minor] cell
+          [cx cy] (grid->screen [major minor])
+          r (* *tile-size* 2)
+          x1 (- cx r)
+          y1 (- cy r)
+          gradient (.createRadialGradient *ctx* cx cy r cx cy 0)]
+      (.addColorStop gradient 0.551 "transparent")
+      (.addColorStop gradient 0.55 "yellow")
+      (.addColorStop gradient 0 "transparent")
+      (aset *ctx* "fillStyle" gradient)
+
+      (.fillRect *ctx* x1 y1 (* 2 r) (* 2 r)))))
+
 (defn init-canvas!
   "Creates a new canvas/context pair given a canvas ID"
   [canvas-id]
@@ -200,6 +211,7 @@
     (draw-axis-set! (* -1 (/ π 6)))
     (draw-axis-set! (/ π 2))
     (annotate-board!)
+    (draw-highlight! game)
     (draw-pieces! game)))
 
 (defn consume-state!
@@ -232,6 +244,11 @@
   "Binds event listeners, translates them into user actions (generally clicks
   on the board) and pumps puts them to `interaction-chan`."
   [interaction-chan]
+  (dommy/listen! (sel1 :body) :keydown
+    (fn [e]
+      (if (= (aget e "keyCode") 68)
+        (print (game/urlize @game-state)))))
+
   (dommy/listen! (sel1 :#primaryCanvas) :click
     (fn [e]
       (let [x (aget e "layerX")
