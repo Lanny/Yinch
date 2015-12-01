@@ -29,6 +29,27 @@
                  (or hopped (not= (-> board major minor :type) :empty))
                  (not= (-> board major minor :type) :empty))))))
 
+(defn- flip-between
+  ""
+  [game [major-1 minor-1] [major-2 minor-2]]
+  (let [board (:board game)
+        major-step (signum (- major-2 major-1))
+        minor-step (signum (- minor-2 minor-1))]
+    (loop [major major-1
+           minor minor-1
+           board board]
+      (let [new-board (update-in board [major minor]
+                        (fn [cell]
+                          (if (= (:type cell) :tile)
+                            (assoc cell :color (other (:color cell)))
+                            cell)))]
+        (if (and (= major major-2)
+                 (= minor minor-2))
+          (assoc game :board new-board)
+          (recur (+ major major-step)
+                 (+ minor minor-step)
+                 new-board))))))
+
 (defn urlize
   "Returns a url for viewing a game state."
   ([board]
@@ -98,6 +119,7 @@
            (update-in [:turn] other)
            (assoc :highlight-cell nil)
            (assoc :phase :ring-pick)
+           (flip-between [from-major from-minor] [major minor])
            (assoc-in [:board from-major from-minor :type] :tile)
            (assoc-in [:board major minor] {:type :ring
                                            :color (:turn game)}))])))

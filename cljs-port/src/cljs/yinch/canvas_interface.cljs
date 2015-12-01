@@ -145,10 +145,10 @@
               color (:color cell)]
           (case (:type cell)
             :tile (circle! x y *tile-size* 2
-                           (color lip-colors)
-                           (color piece-colors))
+                           (lip-colors color)
+                           (piece-colors color))
             :ring (circle! x y *tile-size* 6
-                           (color piece-colors))
+                           (piece-colors color))
             :empty nil
             (do
               (throw (str "Unexpected cell type. Cell:" cell)))))))))
