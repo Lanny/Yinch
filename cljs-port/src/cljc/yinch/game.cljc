@@ -10,24 +10,27 @@
   [game [target-major target-minor]]
   (let [[source-major source-minor] (:highlight-cell game)
         board (:board game)
-        major-step (signum (- target-major target-minor))
-        minor-step (signum (- target-major target-minor))]
-    (loop [major source-major
-           minor source-minor
+        major-step (signum (- target-major source-major))
+        minor-step (signum (- target-minor source-minor))]
+    (loop [major (+ source-major major-step)
+           minor (+ source-minor minor-step)
            hopped false
            last-occupied false]
       (cond
         (= (get-in board [major minor :type]) :ring)
-          false
-        (and (not= (-> board major minor :type) :tile)
+          true
+        (and (not= (get-in board [major minor :type]) :empty)
              (not last-occupied)
              hopped)
+          true
+        (and (= major target-major)
+             (= minor target-minor))
           false
         :default
           (recur (+ major major-step)
                  (+ minor minor-step)
-                 (or hopped (not= (-> board major minor :type) :empty))
-                 (not= (-> board major minor :type) :empty))))))
+                 (or hopped (not= (get-in board [major minor :type]) :empty))
+                 (not= (get-in board [major minor :type]) :empty))))))
 
 (defn- flip-between
   ""
