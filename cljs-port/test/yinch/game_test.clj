@@ -1,5 +1,6 @@
 (ns yinch.game-test
   (:require [clojure.test :refer :all]
+            [yinch.board :as board]
             [yinch.board-test :refer [assert-cell]]
             [yinch.game :refer :all]
             [clojure.pprint :refer [pprint]]))
@@ -29,6 +30,26 @@
     (is (not (nil? (:board game))))
     (is (:phase game) :ring-placement)
     (is (:turn game) :white)))
+
+(deftest test-find-runs
+  (let [board (-> (board/make-board)
+                  (assoc-in [4 2] {:type :tile :color :white})
+                  (assoc-in [4 3] {:type :tile :color :white})
+                  (assoc-in [4 4] {:type :tile :color :white})
+                  (assoc-in [4 5] {:type :tile :color :white})
+                  (assoc-in [4 6] {:type :tile :color :white})
+                  (assoc-in [4 7] {:type :tile :color :white})
+                  (assoc-in [7 2] {:type :tile :color :black})
+                  (assoc-in [7 3] {:type :tile :color :black})
+                  (assoc-in [7 4] {:type :tile :color :black})
+                  (assoc-in [7 5] {:type :tile :color :white})
+                  (assoc-in [7 6] {:type :tile :color :black}))
+        runs1 (find-runs board [[4 2] [4 3]])
+        runs2 (find-runs board [[7 3] [7 4]])]
+    (is (= runs1 #{[[4 2] [4 6]] [[4 3] [4 7]]}))
+    (is (= runs2 #{}))))
+
+
 
 (deftest test-integration
   (let [script-1 [[:white 6 6]   ; Throw down two rings each.
