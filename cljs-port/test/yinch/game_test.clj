@@ -12,16 +12,15 @@
   ([game moves]
    (play-script game moves true))
   ([game moves halt-on-fail]
-     (println "juju")
    (loop [game game
-          [[player major minor] & moves] moves]
+          [[player major minor] & remaining-moves] moves]
      (let [[status game] (intrepret-click game player major minor)]
        (cond
          (and halt-on-fail
               (not= (:status status) :success))
            [status game]
-         (seq moves)
-           (recur game moves)
+         (seq remaining-moves)
+           (recur game remaining-moves)
          true
           [status game])))))
 
