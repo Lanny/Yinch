@@ -12,6 +12,7 @@
   ([game moves]
    (play-script game moves true))
   ([game moves halt-on-fail]
+     (println "juju")
    (loop [game game
           [[player major minor] & moves] moves]
      (let [[status game] (intrepret-click game player major minor)]
@@ -44,12 +45,12 @@
                   (assoc-in [7 4] {:type :tile :color :black})
                   (assoc-in [7 5] {:type :tile :color :white})
                   (assoc-in [7 6] {:type :tile :color :black}))
-        runs1 (find-runs board [[4 2] [4 3]])
-        runs2 (find-runs board [[7 3] [7 4]])]
+        runs1 (find-runs board [[4 2] [4 3] [4 4] [4 5] [4 6] [4 7]])
+        runs2 (find-runs board [[4 6]])
+        runs3 (find-runs board [[7 3] [7 4]])]
     (is (= runs1 #{[[4 2] [4 6]] [[4 3] [4 7]]}))
-    (is (= runs2 #{}))))
-
-
+    (is (= runs2 #{[[4 2] [4 6]] [[4 3] [4 7]]}))
+    (is (= runs3 #{}))))
 
 (deftest test-integration
   (let [script-1 [[:white 6 6]   ; Throw down two rings each.

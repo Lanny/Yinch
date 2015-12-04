@@ -1,6 +1,7 @@
 (ns yinch.game
-  (:require [yinch.board :as board]
-            [cemerick.url :as url])
+  (:require [clojure.set :as hset]
+            [cemerick.url :as url]
+            [yinch.board :as board])
   (:use [yinch.utils :only [other signum]]))
 
 (defn- line-blocked?
@@ -52,6 +53,83 @@
           (recur (+ major major-step)
                  (+ minor minor-step)
                  new-board))))))
+
+(def axial-steps
+  "Major/minor pairs of step-increments that permit valid lines."
+  [[1 0] [0 1] [1 1]])
+
+(defn- cast-ray
+  "Finds the furthest cell along a line (determined by step arg) from a test
+  point that has a tile of the same color as the tile in the initial cell."
+  [board [test-major test-minor] [major-step minor-step]]
+    (let [color (get-in board [test-major test-minor :color])]
+      (loop [major test-major
+             minor test-minor
+             extremum [test-major test-minor]]
+        (cond
+          (not (board/cell-valid? major minor))
+            extremum
+          (not= :tile (get-in board [major minor :type]))
+            extremum
+          (= color (get-in board [major minor :color]))
+            (recur (+ major major-step)
+                   (+ minor minor-step)
+                   [major minor])
+          :default
+            extremum))))
+
+
+(defn- find-runs*
+  "Finds contiguous runs that intersect a single cell. Returns a set of such
+  runs."
+  [board [test-major test-minor]]
+  ; Check each axis, major (numbers), minor (letters), and contra-diagonal
+  ; (moving along both major and minor lines).
+  (loop [[[major-step minor-step] & remaining-axes] axial-steps
+         runs #{}]
+          ; Find the cell with the maximal sum of major and minor values which
+          ; is part of a contiguous run of tiles, the same color as [test-major
+          ; test-minor] along this axis. Conceptually the top-right most cell
+          ; of any run this test-cell could be in.
+    (let [maximum (cast-ray board [test-major test-minor]
+                            [major-step minor-step])
+          ; Invert the step sign to find the cell with minimal major minor sum
+          ; part of a contiguous run.
+          minimum (cast-ray board [test-major test-minor]
+                            [(* -1 major-step) (* -1 minor-step)])
+          ; Distance along this axis from the max cell to the min cell. This
+          ; math only works if both cells are valid and lie in a straight line.
+          ; This is the length of the contiguous line containing the test cell.
+          run-length (max (- (maximum 0) (minimum 0) -1)
+                          (- (maximum 1) (minimum 1) -1))
+          ; Since every run is 5 cells long, this is the number of runs
+          ; containing the test cell. Subtract 4 because 5 - 5 = 0 when that's
+          ; actually a valid 5-run
+          run-count (- run-length 4)
+          ; Roll the runs from this axis into the runs we've calculated for the
+          ; other axes so far
+          updated-runs (into runs
+                             (for [offset (range (max 0 run-count))]
+                                ; Start cell of the run
+                               [[(+ (minimum 0) (* offset major-step))
+                                 (+ (minimum 1) (* offset minor-step))]
+                                ; End cell of the run, 4 cells later (for
+                                ; an inclusive length between of 5).
+                                [(+ (minimum 0) (* offset major-step)
+                                    (* major-step 4))
+                                 (+ (minimum 1) (* offset minor-step)
+                                    (* minor-step 4))]]))]
+      (if (seq remaining-axes)
+        (recur remaining-axes updated-runs)
+        updated-runs))))
+
+(defn find-runs
+  "Takes a list of cells that have changed recently and returns a set of length
+  5 runs that include one of more of those cells. Runs are represented as
+  3 vectors of the format [color [major-1 minor-1] [major-2 minor-2]]."
+  [board cells-to-consider]
+    (apply hset/union
+           (map (partial find-runs* board) cells-to-consider)))
 
 (defn urlize
   "Returns a url for viewing a game state."
