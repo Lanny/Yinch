@@ -80,6 +80,10 @@
                     [:black 6 8]]
         script-3b8 [[:black 2 4]  ; Pick a ring. Drop it beyond an opponent's
                     [:black 6 8]] ; ring.
+        script-4b1 [[:white 2 3]  ; Pick a ring, drop it two cells beyond a
+                    [:white 2 0]] ; tile.
+        script-4b2 [[:white 2 3]  ; Pick a ring, drop it one cell beyond a
+                    [:white 2 1]] ; tile. Valid move.
 
         [status-1 game-1] (play-script script-1)
         [status-2b1 game-2b1] (play-script game-1 script-2b1)
@@ -92,7 +96,9 @@
         [status-3b5 game-3b5] (play-script game-2b1 script-3b5)
         [status-3b6 game-3b6] (play-script game-2b1 script-3b6)
         [status-3b7 game-3b7] (play-script game-2b1 script-3b7)
-        [status-3b8 game-3b8] (play-script game-2b1 script-3b8)]
+        [status-3b8 game-3b8] (play-script game-2b1 script-3b8)
+        [status-4b1 game-4b1] (play-script game-3b5 script-4b1)
+        [status-4b2 game-4b2] (play-script game-3b5 script-4b2)]
     (is (= (:status status-1) :success))
     (is (= (:phase game-1) :ring-placement))
     (is (= (:turn game-1) :white))
@@ -138,4 +144,13 @@
 
     (is (= (:status status-3b7) :failure))
 
-    (is (= (:status status-3b8) :failure))))
+    (is (= (:status status-3b8) :failure))
+
+    (is (= (:status status-4b1) :failure))
+    (is (= (get-in game-4b1 [:board 2 3 :type]) :ring))
+    (is (= (get-in game-4b1 [:board 2 0 :type]) :empty))
+
+    (is (= (:status status-4b2) :success))
+    (is (= (get-in game-4b2 [:board 2 1 :type]) :ring))
+    (is (= (get-in game-4b2 [:board 2 3 :type]) :tile))
+    (is (= (get-in game-4b2 [:board 2 3 :color]) :white))))

@@ -18,10 +18,10 @@
       (let [raw (Math/signum (float x))
             xt (type x)]
         (cond 
-          (= xt Long) (long x)
-          (= xt Integer) (int x)
-          (= xt Float) x
-          (= xt Double) (double x)))
+          (= xt Long) (long raw)
+          (= xt Integer) (int raw)
+          (= xt Float) raw
+          (= xt Double) (double raw)))
      :cljs (.sign js/Math x)))
 
 (defn half [x] (/ x 2))

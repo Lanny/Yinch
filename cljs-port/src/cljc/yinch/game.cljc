@@ -20,7 +20,7 @@
       (cond
         (= (get-in board [major minor :type]) :ring)
           true
-        (and (not= (get-in board [major minor :type]) :empty)
+        (and (= (get-in board [major minor :type]) :empty)
              (not last-occupied)
              hopped)
           true
@@ -34,7 +34,8 @@
                  (not= (get-in board [major minor :type]) :empty))))))
 
 (defn- flip-between
-  ""
+  "Takes a game map and returns a game map with all the tile-occupied cells
+  between cell-1 and cell-2 of inverted color."
   [game [major-1 minor-1] [major-2 minor-2]]
   (let [board (:board game)
         major-step (signum (- major-2 major-1))
@@ -133,10 +134,10 @@
 
 (defn urlize
   "Returns a url for viewing a game state."
-  ([board]
-   (urlize board "http://localhost:3000"))
-  ([board base]
-   (->> board
+  ([game]
+   (urlize game "http://localhost:3000"))
+  ([game base]
+   (->> game
         (prn-str)        ; to edn
         (url/url-encode) ; to something we can throw in a hash
         (assoc (url/url base "index.html")
