@@ -124,8 +124,22 @@
     (apply hset/union
            (map (partial find-runs* board) cells-to-consider)))
 
+(defn mutually-exclusive?
+  "Returns true if no two members of `runs` contain the same cell."
+  [runs]
+  ; Find the set of all cells contained in all runs
+  (let [run-membership (reduce (fn [acc [from to]]
+                                 (->> (board/cells-between from to)
+                                      (into #{})
+                                      (hset/union acc)))
+                               #{} runs)]
+    ; If the n runs are mutually execlusive then there should be exactly 5*n
+    ; cells in the union of all the runs cell memberships
+    (= (count run-membership)
+       (* 5 (count runs)))))
+
 (defn clear-runs
-  "Takes a game state and a list of ceels that have changed recently. Returns
+  "Takes a game state and a list of cells that have changed recently. Returns
   the a modified game with any simple (length of exactly 5) runs cleared and
   the appropriate state in the case of complex (multiple possible) runs."
   [game [from-major from-minor] [to-major to-minor]]

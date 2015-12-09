@@ -51,6 +51,17 @@
     (is (= runs2 #{[[4 2] [4 6]] [[4 3] [4 7]]}))
     (is (= runs3 #{}))))
 
+(deftest test-mutually-execlusive?
+  (is (= (mutually-exclusive? #{[[4 2] [4 6]]}) true)) ; Single run
+  (is (= (mutually-exclusive? #{[[4 3] [4 7]]}) true)) ; same
+
+  ; Now a length-6 run, definitionally non-mutually execlusive
+  (is (= (mutually-exclusive? #{[[4 2] [4 6]] [[4 3] [4 7]]}) false))
+
+  ; And a cross-run (two length-5 runs about different axes with one shared
+  ; tile).
+  (is (= (mutually-exclusive? #{[[4 2] [4 6]] [[1 3] [5 1]]}) false)))
+
 (deftest test-integration
   (let [script-1 [[:white 6 6]   ; Throw down two rings each.
                   [:black 5 2]
@@ -118,7 +129,6 @@
         [status-4b1 game-4b1] (play-script game-3b5 script-4b1)
         [status-4b2 game-4b2] (play-script game-3b5 script-4b2)
         [status-4b3 game-4b3] (play-script game-3b5 script-4b3)]
-    (println (urlize game-3b5))
     (is (= (:status status-1) :success))
     (is (= (:phase game-1) :ring-placement))
     (is (= (:turn game-1) :white))
