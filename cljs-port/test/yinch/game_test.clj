@@ -84,6 +84,24 @@
                     [:white 2 0]] ; tile.
         script-4b2 [[:white 2 3]  ; Pick a ring, drop it one cell beyond a
                     [:white 2 1]] ; tile. Valid move.
+        script-4b3 [[:white 6 6]  ; Setup a white len-5 run.
+                    [:white 6 5]
+                    [:black 4 2]
+                    [:black 4 3]
+                    [:white 6 7]
+                    [:white 7 7]
+                    [:black 2 4]
+                    [:black 3 4]
+                    [:white 6 5]
+                    [:white 6 4]
+                    [:black 3 4]
+                    [:black 4 4]
+                    [:white 6 4]
+                    [:white 6 3]
+                    [:black 4 4]
+                    [:black 4 5]
+                    [:white 6 3]
+                    [:white 6 2]]
 
         [status-1 game-1] (play-script script-1)
         [status-2b1 game-2b1] (play-script game-1 script-2b1)
@@ -98,7 +116,8 @@
         [status-3b7 game-3b7] (play-script game-2b1 script-3b7)
         [status-3b8 game-3b8] (play-script game-2b1 script-3b8)
         [status-4b1 game-4b1] (play-script game-3b5 script-4b1)
-        [status-4b2 game-4b2] (play-script game-3b5 script-4b2)]
+        [status-4b2 game-4b2] (play-script game-3b5 script-4b2)
+        [status-4b3 game-4b3] (play-script game-3b5 script-4b3)]
     (is (= (:status status-1) :success))
     (is (= (:phase game-1) :ring-placement))
     (is (= (:turn game-1) :white))
@@ -153,4 +172,14 @@
     (is (= (:status status-4b2) :success))
     (is (= (get-in game-4b2 [:board 2 1 :type]) :ring))
     (is (= (get-in game-4b2 [:board 2 3 :type]) :tile))
-    (is (= (get-in game-4b2 [:board 2 3 :color]) :white))))
+    (is (= (get-in game-4b2 [:board 2 3 :color]) :white))
+
+    (is (= (:phase game-4b3) :ring-pick))
+    (is (= (:turn game-4b3) :black))
+    (is (= (get-in game-4b3 [:board 6 7 :type]) :empty))
+    (is (= (get-in game-4b3 [:board 6 6 :type]) :empty))
+    (is (= (get-in game-4b3 [:board 6 5 :type]) :empty))
+    (is (= (get-in game-4b3 [:board 6 4 :type]) :empty))
+    (is (= (get-in game-4b3 [:board 6 3 :type]) :empty))
+    (is (= (get-in game-4b3 [:rings-remaining :white]) 4))
+    (is (= (get-in game-4b3 [:rings-remaining :black]) 5))))
