@@ -64,6 +64,26 @@
            (and (= major-delta minor-delta) ; No possible uneven contra-diag move
                 (= (signum major-delta) (signum minor-delta)))))))
 
+(defn cells-between
+  "Returns a list of cells that lie between from and to cells or nil if there
+  is no line between them."
+  [from to]
+  (if-not (line-valid? from to)
+    nil
+    (let [[from-major from-minor] from
+          [to-major to-minor] to
+          major-step (signum (- to-major from-major))
+          minor-step (signum (- to-minor from-minor))]
+      (loop [major from-major
+             minor from-minor
+             cells '()]
+        (if (and (= major to-major)
+                 (= minor to-minor))
+          (conj cells [major minor])
+          (recur (+ major major-step)
+                 (+ minor minor-step)
+                 (conj cells [major minor])))))))
+
 (defn flip-cell
   "Returns the board with the cell at (major, minor) set to the opposite color.
   It is an error to flip a cell of any type other than :tile"

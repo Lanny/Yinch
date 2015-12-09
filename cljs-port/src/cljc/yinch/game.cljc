@@ -36,24 +36,16 @@
 (defn- flip-between
   "Takes a game map and returns a game map with all the tile-occupied cells
   between cell-1 and cell-2 of inverted color."
-  [game [major-1 minor-1] [major-2 minor-2]]
-  (let [board (:board game)
-        major-step (signum (- major-2 major-1))
-        minor-step (signum (- minor-2 minor-1))]
-    (loop [major major-1
-           minor minor-1
-           board board]
-      (let [new-board (update-in board [major minor]
-                        (fn [cell]
-                          (if (= (:type cell) :tile)
-                            (assoc cell :color (other (:color cell)))
-                            cell)))]
-        (if (and (= major major-2)
-                 (= minor minor-2))
-          (assoc game :board new-board)
-          (recur (+ major major-step)
-                 (+ minor minor-step)
-                 new-board))))))
+  [game cell-1 cell-2]
+  (assoc game :board
+    (reduce (fn [board [major minor]]
+              (update-in board [major minor]
+                (fn [cell]
+                  (if (= (:type cell) :tile)
+                    (assoc cell :color (other (:color cell)))
+                    cell))))
+            (:board game)
+            (board/cells-between cell-1 cell-2))))
 
 (def axial-steps
   "Major/minor pairs of step-increments that permit valid lines."
@@ -131,6 +123,15 @@
   [board cells-to-consider]
     (apply hset/union
            (map (partial find-runs* board) cells-to-consider)))
+
+(defn clear-runs
+  "Takes a game state and a list of ceels that have changed recently. Returns
+  the a modified game with any simple (length of exactly 5) runs cleared and
+  the appropriate state in the case of complex (multiple possible) runs."
+  [game [from-major from-minor] [to-major to-minor]]
+  (let [cells-to-consider (board/cells-between [from-major from-minor]
+                                               [to-major to-minor])
+        runs (find-runs (:board game) cells-to-consider)]))
 
 (defn urlize
   "Returns a url for viewing a game state."

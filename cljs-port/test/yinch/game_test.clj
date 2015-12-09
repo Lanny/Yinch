@@ -118,6 +118,7 @@
         [status-4b1 game-4b1] (play-script game-3b5 script-4b1)
         [status-4b2 game-4b2] (play-script game-3b5 script-4b2)
         [status-4b3 game-4b3] (play-script game-3b5 script-4b3)]
+    (println (urlize game-3b5))
     (is (= (:status status-1) :success))
     (is (= (:phase game-1) :ring-placement))
     (is (= (:turn game-1) :white))
