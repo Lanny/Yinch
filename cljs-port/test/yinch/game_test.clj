@@ -113,6 +113,11 @@
                     [:black 4 5]
                     [:white 6 3]
                     [:white 6 2]]
+        script-5b1 [[:white 6 2]] ; Pick a ring to remove, valid
+        script-5b2 [[:white 6 3]] ; Pick a tile during ring-removal, invalid
+        script-5b3 [[:white 6 1]] ; Pick an empty cell during ring-removal
+        script-5b4 [[:white -1 -1]] ; Pick an invalid cell during ring-removal
+
 
         [status-1 game-1] (play-script script-1)
         [status-2b1 game-2b1] (play-script game-1 script-2b1)
@@ -128,8 +133,11 @@
         [status-3b8 game-3b8] (play-script game-2b1 script-3b8)
         [status-4b1 game-4b1] (play-script game-3b5 script-4b1)
         [status-4b2 game-4b2] (play-script game-3b5 script-4b2)
-        [status-4b3 game-4b3] (play-script game-3b5 script-4b3)]
-    (println (urlize game-3b5))
+        [status-4b3 game-4b3] (play-script game-3b5 script-4b3)
+        [status-5b1 game-5b1] (play-script game-4b3 script-5b1)
+        [status-5b2 game-5b2] (play-script game-4b3 script-5b2)
+        [status-5b3 game-5b3] (play-script game-4b3 script-5b3)
+        [status-5b4 game-5b4] (play-script game-4b3 script-5b4)]
     (is (= (:status status-1) :success))
     (is (= (:phase game-1) :ring-placement))
     (is (= (:turn game-1) :white))
@@ -194,4 +202,29 @@
     (is (= (get-in game-4b3 [:board 6 4 :type]) :empty))
     (is (= (get-in game-4b3 [:board 6 3 :type]) :empty))
     (is (= (get-in game-4b3 [:rings-remaining :white]) 5))
-    (is (= (get-in game-4b3 [:rings-remaining :black]) 5))))
+    (is (= (get-in game-4b3 [:rings-remaining :black]) 5))
+
+    (is (= (:status status-5b1) :success))
+    (is (= (get-in game-5b1 [:rings-remaining :white]) 4))
+    (is (= (get-in game-5b1 [:rings-remaining :black]) 5))
+    (is (= (get-in game-5b1 [:board 6 2 :type]) :empty))
+    (is (= (:turn game-5b1) :black))
+    (is (= (:phase game-5b1) :ring-pick))
+
+    (is (= (:status status-5b2) :failure))
+    (is (= (get-in game-5b2 [:rings-remaining :white]) 5))
+    (is (= (get-in game-5b2 [:board 6 2 :type]) :ring))
+    (is (= (get-in game-5b2 [:board 6 2 :color]) :white))
+
+    (is (= (:status status-5b3) :failure))
+    (is (= (get-in game-5b3 [:rings-remaining :white]) 5))
+    (is (= (get-in game-5b3 [:board 6 2 :type]) :ring))
+    (is (= (get-in game-5b3 [:board 6 2 :color]) :white))
+
+    (is (= (:status status-5b4) :failure))
+    (is (= (get-in game-5b4 [:rings-remaining :white]) 5))
+    (is (= (get-in game-5b4 [:board 6 2 :type]) :ring))
+    (is (= (get-in game-5b4 [:board 6 2 :color]) :white))
+
+
+))

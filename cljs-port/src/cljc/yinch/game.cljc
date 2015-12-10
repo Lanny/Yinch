@@ -240,6 +240,26 @@
                                            :color (:turn game)})
            (clear-runs [from-major from-minor] [major minor]))])))
 
+(defn remove-ring
+  [game player major minor]
+  (let [cell (board/get-cell (:board game) major minor)]
+    (cond
+      (not= (:type cell) :ring)
+        [{:status :failure
+          :reason "You must pick a ring to remove from the board."}
+         game]
+      (not= (:color cell) player)
+        [{:status :failure
+          :reason "You must pick a ring of your own color to remove."}
+         game]
+      :default
+        [{:status :success}
+         (-> game
+             (assoc-in [:board major minor] {:type :empty})
+             (update-in [:rings-remaining player] dec)
+             (assoc :turn (other player))
+             (assoc :phase :ring-pick))])))
+
 (defn intrepret-click
   "Takes a game, player indication, and grid position and returns a pair
   [status game-map] that represents the result of applying the move (if the
@@ -260,6 +280,8 @@
       (pick-ring game player major minor)
     (= (:phase game) :ring-drop)
       (drop-ring game player major minor)
+    (= (:phase game) :ring-removal)
+      (remove-ring game player major minor)
     :default
       [{:status :error
         :reason "Game appears to be in an invalid state."
