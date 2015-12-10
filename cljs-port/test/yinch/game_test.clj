@@ -129,6 +129,7 @@
         [status-4b1 game-4b1] (play-script game-3b5 script-4b1)
         [status-4b2 game-4b2] (play-script game-3b5 script-4b2)
         [status-4b3 game-4b3] (play-script game-3b5 script-4b3)]
+    (println (urlize game-3b5))
     (is (= (:status status-1) :success))
     (is (= (:phase game-1) :ring-placement))
     (is (= (:turn game-1) :white))
@@ -185,12 +186,12 @@
     (is (= (get-in game-4b2 [:board 2 3 :type]) :tile))
     (is (= (get-in game-4b2 [:board 2 3 :color]) :white))
 
-    (is (= (:phase game-4b3) :ring-pick))
-    (is (= (:turn game-4b3) :black))
+    (is (= (:phase game-4b3) :ring-removal))
+    (is (= (:turn game-4b3) :white))
     (is (= (get-in game-4b3 [:board 6 7 :type]) :empty))
     (is (= (get-in game-4b3 [:board 6 6 :type]) :empty))
     (is (= (get-in game-4b3 [:board 6 5 :type]) :empty))
     (is (= (get-in game-4b3 [:board 6 4 :type]) :empty))
     (is (= (get-in game-4b3 [:board 6 3 :type]) :empty))
-    (is (= (get-in game-4b3 [:rings-remaining :white]) 4))
+    (is (= (get-in game-4b3 [:rings-remaining :white]) 5))
     (is (= (get-in game-4b3 [:rings-remaining :black]) 5))))

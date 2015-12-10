@@ -138,6 +138,18 @@
     (= (count run-membership)
        (* 5 (count runs)))))
 
+(defn- clear-run
+  "Takes a game and a run. Returns the game with the specified run cleared from
+  the board and in the ring-removal state for the appropriate player."
+  [game [run-start run-end]]
+  (let [run-color (get-in game [:board (run-start 0) (run-start 1) :color])]
+    (reduce (fn [game [major minor]]
+              (assoc-in game [:board major minor] {:type :empty}))
+            (-> game
+                (assoc :turn run-color)
+                (assoc :phase :ring-removal))
+            (board/cells-between run-start run-end))))
+
 (defn clear-runs
   "Takes a game state and a list of cells that have changed recently. Returns
   the a modified game with any simple (length of exactly 5) runs cleared and
@@ -145,7 +157,13 @@
   [game [from-major from-minor] [to-major to-minor]]
   (let [cells-to-consider (board/cells-between [from-major from-minor]
                                                [to-major to-minor])
-        runs (find-runs (:board game) cells-to-consider)]))
+        runs (find-runs (:board game) cells-to-consider)]
+    (cond
+      (= (count runs) 0)
+        game ; No runs exist, take no action.
+      (mutually-exclusive? runs)
+        (clear-run game (first runs)))))
+        
 
 (defn urlize
   "Returns a url for viewing a game state."
@@ -219,7 +237,8 @@
            (flip-between [from-major from-minor] [major minor])
            (assoc-in [:board from-major from-minor :type] :tile)
            (assoc-in [:board major minor] {:type :ring
-                                           :color (:turn game)}))])))
+                                           :color (:turn game)})
+           (clear-runs [from-major from-minor] [major minor]))])))
 
 (defn intrepret-click
   "Takes a game, player indication, and grid position and returns a pair
