@@ -25,13 +25,8 @@
      (go
        (loop [interaction (async/<! interaction-chan)
               current-state game]
-         (case (:type interaction)
-           :grid-click
-             (do
-               (let [[status new-state] (apply game/intrepret-click
-                                               current-state
-                                               (:click-info interaction))]
-                 (async/put! state-chan new-state)
-                 (async/put! status-chan status)
-                 (recur (async/<! interaction-chan) new-state)))
-           (print "Unexpected interaction:"  interaction)))))))
+         (let [[status new-state] (game/intrepret-move current-state
+                                                       interaction)]
+           (async/put! state-chan new-state)
+           (async/put! status-chan status)
+           (recur (async/<! interaction-chan) new-state)))))))

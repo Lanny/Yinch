@@ -8,13 +8,14 @@
 (defn play-script
   ""
   ([moves]
-   (play-script (new-game) moves))
+   (play-script (new-game true) moves))
   ([game moves]
    (play-script game moves true))
   ([game moves halt-on-fail]
    (loop [game game
           [[player major minor] & remaining-moves] moves]
-     (let [[status game] (intrepret-click game player major minor)]
+     (let [[status game] (intrepret-move game {:type :grid-click
+                                               :click-info [player major minor]})]
        (cond
          (and halt-on-fail
               (not= (:status status) :success))

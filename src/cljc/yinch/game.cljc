@@ -140,7 +140,8 @@
 
 (defn- clear-run
   "Takes a game and a run. Returns the game with the specified run cleared from
-  the board and in the ring-removal state for the appropriate player."
+  the board and in the ring-removal state for the appropriate player. If removal
+  of the run produces a victory condition, return the game in that state."
   [game [run-start run-end]]
   (let [run-color (get-in game [:board (run-start 0) (run-start 1) :color])]
     (reduce (fn [game [major minor]]
@@ -179,14 +180,18 @@
 
 (defn new-game
   "Creates a new game map in the initial state (ring placement, white starts)."
-  []
-  {:board (board/make-board)
-   :phase :ring-placement
-   :turn :white
-   :rings-placed 0
-   :highlight-cell nil
-   :rings-remaining {:black 5
-                     :white 5}})
+  ([]
+   (new-game true))
+  ([track-history]
+    {:board (board/make-board)
+     :phase :ring-placement
+     :turn :white
+     :rings-placed 0
+     :highlight-cell nil
+     :rings-remaining {:black 5
+                       :white 5}
+     :track-history track-history
+     :history nil}))
 
 (defn place-ring
   [game player major minor]
@@ -288,3 +293,16 @@
         :game-phase (:phase game)}
        nil]))
   
+(defn intrepret-move
+  [game move]
+  {:post [(if (= (get-in % [0 :status]) :success)
+            true
+            (= (% 1) game))]}
+  (let [[status new-game] (case (:type move)
+                            :grid-click
+                              (apply intrepret-click game (:click-info move)))]
+    (if (and (:track-history game)
+             (= (:status status) :success))
+      [status
+       (update-in new-game [:history] #(conj % move))]
+      [status new-game])))
