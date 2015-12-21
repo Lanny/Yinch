@@ -227,5 +227,7 @@
     (is (= (get-in game-5b4 [:board 6 2 :type]) :ring))
     (is (= (get-in game-5b4 [:board 6 2 :color]) :white))
 
-
-))
+    ; Sanity check that replaying a script derived from history produces the
+    ; same game.
+    (is (= game-5b4
+           ((play-script (game->script game-5b4)) 1)))))

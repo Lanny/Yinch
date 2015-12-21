@@ -246,8 +246,9 @@
   [interaction-chan]
   (dommy/listen! (sel1 :body) :keydown
     (fn [e]
-      (if (= (aget e "keyCode") 68)
-        (print (game/urlize @game-state)))))
+      (case (aget e "keyCode")
+        68 (print (game/urlize @game-state))
+        83 (print (game/game->script @game-state)))))
 
   (dommy/listen! (sel1 :#primaryCanvas) :click
     (fn [e]

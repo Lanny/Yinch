@@ -153,18 +153,19 @@
 
 (defn clear-runs
   "Takes a game state and a list of cells that have changed recently. Returns
-  the a modified game with any simple (length of exactly 5) runs cleared and
-  the appropriate state in the case of complex (multiple possible) runs."
+  a 2-vec of the runs cleared and a modified game with any simple (length of
+  exactly 5) runs cleared."
   [game [from-major from-minor] [to-major to-minor]]
   (let [cells-to-consider (board/cells-between [from-major from-minor]
                                                [to-major to-minor])
         runs (find-runs (:board game) cells-to-consider)]
     (cond
       (= (count runs) 0)
-        game ; No runs exist, take no action.
+        [game ; No runs exist, take no action.
+         nil]
       (mutually-exclusive? runs)
-        (clear-run game (first runs)))))
-        
+        [(clear-run game (first runs))
+         (first runs)])))
 
 (defn urlize
   "Returns a url for viewing a game state."
@@ -177,6 +178,67 @@
         (assoc (url/url base "index.html")
                :anchor)  ; to composed url
         (str))))         ; to string
+
+;24.xg5-g9xa5;d3-b3
+;  4  8 12 16    24
+; 5 * 3 + 3 + 9 = 26
+
+
+
+(defn- gipf-pad
+  [s]
+  (apply str s
+         (map (constantly " ")
+              (range (- 26 (count s))))))
+
+(defn- gipf-sep
+  [move]
+  (if (= (:player move) :white) "\t" "\n"))
+
+(comment (defn- gipf-gen-entry-text
+  [moves]
+  (case (:action moves)
+    :place-ring
+      (str (board/major-names (get-in m [:position 0]))
+           (board/minor-names (get-in m [:position 1])))
+    nil)))
+
+;(defn game->gipf-notation
+;  [{history :history}]
+;  (loop [[m & ms] history
+;         idx 0
+;         tokens (list "\n" (gipf-pad "Black")
+;                      "\t" (gipf-pad "White"))]
+;    (if (nil? m)
+;      (apply str (reverse tokens))
+;      (recur ms
+;             (inc idx)
+;             (conj tokens
+;                   (if (= (:player (first ms)) (:player m)) 1 2 ))))))
+
+(defn game->script
+  [{history :history}]
+  (into []
+        (reduce (fn [script move]
+                  (case (:action move)
+                    :place-ring
+                      (conj script
+                            [(:player move)
+                             ((:position move) 0)
+                             ((:position move) 1)])
+                    :ring-move
+                      (conj script
+                            [(:player move) ((:stop move) 0) ((:stop move) 1)]
+                            [(:player move) ((:start move) 0) ((:start move) 1)])
+                    :clear-run
+                      script
+                    :remove-ring
+                      (conj script
+                            [(:player move)
+                             ((:ring-position move) 0)
+                             ((:ring-position move) 1)])))
+                nil
+                history)))
 
 (defn new-game
   "Creates a new game map in the initial state (ring placement, white starts)."
@@ -203,13 +265,17 @@
       (let [updated-game (-> game
                              (update-in [:rings-placed] inc) 
                              (assoc-in [:board major minor] {:type :ring
-                                                             :color player}))]
+                                                             :color player}))
+            status {:status :success
+                    :history (list {:action :place-ring
+                                    :position [major minor]
+                                    :player player})}]
         (if (>= (:rings-placed updated-game) 10)
-          [{:status :success}
+          [status
            (-> updated-game
                (assoc :phase :ring-pick)
                (assoc :turn :black))]
-          [{:status :success}
+          [status
            (-> updated-game
                (assoc :turn (other player)))])))))
 
@@ -234,16 +300,33 @@
       [{:status :failure
         :reason "Not a valid move."}
        game]
-      [{:status :success}
-       (-> game
-           (update-in [:turn] other)
-           (assoc :highlight-cell nil)
-           (assoc :phase :ring-pick)
-           (flip-between [from-major from-minor] [major minor])
-           (assoc-in [:board from-major from-minor :type] :tile)
-           (assoc-in [:board major minor] {:type :ring
-                                           :color (:turn game)})
-           (clear-runs [from-major from-minor] [major minor]))])))
+      (let [updated-game (-> game
+                             (update-in [:turn] other)
+                             (assoc :highlight-cell nil)
+                             (assoc :phase :ring-pick)
+                             (flip-between [from-major from-minor]
+                                           [major minor])
+                             (assoc-in [:board from-major from-minor :type]
+                                       :tile)
+                             (assoc-in [:board major minor]
+                                       {:type :ring :color (:turn game)}))
+            [final-game cleared] (clear-runs updated-game
+                                             [from-major from-minor]
+                                             [major minor])
+            ring-move-entry {:action :ring-move
+                             :player player
+                             :start (:highlight-cell game)
+                             :stop [major minor]}
+            history (if (nil? cleared)
+                      (list ring-move-entry)
+                      (list ring-move-entry
+                            {:action :clear-run
+                             :player player
+                             :run-start (first cleared)
+                             :run-end (last cleared)}))]
+        [{:status :success
+          :history history}
+         final-game]))))
 
 (defn remove-ring
   [game player major minor]
@@ -258,7 +341,10 @@
           :reason "You must pick a ring of your own color to remove."}
          game]
       :default
-        [{:status :success}
+        [{:status :success
+          :history (list {:action :remove-ring
+                          :player player
+                          :ring-position [major minor]})}
          (-> game
              (assoc-in [:board major minor] {:type :empty})
              (update-in [:rings-remaining player] dec)
@@ -304,5 +390,5 @@
     (if (and (:track-history game)
              (= (:status status) :success))
       [status
-       (update-in new-game [:history] #(conj % move))]
+       (update-in new-game [:history] #(apply conj % (:history status)))]
       [status new-game])))
