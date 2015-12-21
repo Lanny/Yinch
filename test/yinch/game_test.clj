@@ -73,11 +73,11 @@
                 [:white 5 3] [:white 5 2] [:black 9 10] [:black 8 10]
                 [:white 5 2] [:white 5 1] [:black 9 8] [:black 8 8]
                 [:white 5 5] [:white 6 6]]
-        [game status] (play-script script)
-        [g-f6 s-f6] (play-script [[:white 5 5]])
-        [g-e6 s-e6] (play-script [[:white 5 4]])
-        [g-c6 c-c6] (play-script [[:white 5 2]])
-        [g-h6 c-h6] (play-script [[:white 5 8]])]
+        [status game] (play-script script)
+        [s-f6 g-f6] (play-script game [[:white 5 5]])
+        [s-e6 g-e6] (play-script game [[:white 5 4]])
+        [c-c6 g-c6] (play-script game [[:white 5 2]])
+        [c-h6 g-h6] (play-script game [[:white 5 8]])]
     (is (= (:status status) :success))
     (is (= (:phase game) :run-pick))
     (is (= (:turn game) :white))
@@ -85,20 +85,21 @@
     (is (= (get-in game [:board 6 6 :type]) :ring))
 
     (is (= (:status s-f6) :success))
-    (is (= (:phase g-f6) :ring-pick))
-    (is (= (:turn g-f6) :black))
+    (is (= (:phase g-f6) :ring-removal))
+    (is (= (:turn g-f6) :white))
     (is (= (get-in g-f6 [:board 5 5 :type]) :empty))
     (is (= (get-in g-f6 [:board 5 2 :type]) :tile))
 
-    (is (= g-f6 g-h6))
+    ;(is (= g-f6 g-h6))
 
     (is (= (:status s-e6) :success))
-    (is (= (:phase g-e6) :ring-pick))
-    (is (= (:turn g-e6) :black))
+    (is (= (:phase g-e6) :ring-removal))
+    (is (= (:turn g-e6) :white))
     (is (= (get-in g-e6 [:board 5 2 :type]) :empty))
-    (is (= (get-in g-e6 [:board 5 5 :type]) :tile))
+    (is (= (get-in g-e6 [:board 5 7 :type]) :tile))
 
-    (is (= g-e6 g-c6))))
+    ;(is (= g-e6 g-c6))
+    ))
 
 (deftest test-cross-run
   (let [script [[:white 5 5] [:black 10 9] [:white 5 4] [:black 10 8]

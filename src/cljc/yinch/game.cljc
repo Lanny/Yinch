@@ -2,7 +2,7 @@
   (:require [clojure.set :as hset]
             [cemerick.url :as url]
             [yinch.board :as board])
-  (:use [yinch.utils :only [other signum]]))
+  (:use [yinch.utils :only [other signum abs]]))
 
 (defn- line-blocked?
   "Given a game (containing a start position on :highlight-cell) and a target
@@ -50,6 +50,25 @@
 (def axial-steps
   "Major/minor pairs of step-increments that permit valid lines."
   [[1 0] [0 1] [1 1]])
+
+(defn- best-run
+  "Returns the member of runs whose center cell is closest to (major, minor) or
+  nil if there there is a tie or or runs is empty."
+  [runs major minor]
+  (->> runs
+       ; create a seq of [distance run] pairs
+       (map (fn [[[maj1 mn1] [maj2 mn2]]]
+         (let [maj-center (/ (+ maj1 maj2) 2)
+               mn-center (/ (+ mn1 mn2) 2)]
+           [(+ (abs (- maj-center major))
+               (abs (- mn-center minor)))
+            [[maj1 mn1] [maj2 mn2]]])))
+       ; sort it
+       (sort-by first)
+       ; take the one with the lowest dist
+       (first)
+       ; and return the run part of it
+       (second)))
 
 (defn- cast-ray
   "Finds the furthest cell along a line (determined by step arg) from a test
@@ -151,21 +170,48 @@
                 (assoc :phase :ring-removal))
             (board/cells-between run-start run-end))))
 
+(defn- clear-runs-for-player
+  "Clears a set of runs belonging to a given player."
+  [game player runs]
+  (let [first-run (first runs)]
+    (cond
+      ; no runs exist, take no action. Shouldn't actually come up.
+      (= (count runs) 0)
+        [{:status :success} game]
+      ; we don't require user input to clear the current set of possible runs
+      (mutually-exclusive? runs)
+        [{:status :success
+          :history (list {:action :clear-run
+                          :player (:turn game)
+                          :run-start (first first-run)
+                          :run-end (second first-run)})}
+         (clear-run game first-run)]
+      ; we do need user input, put the game into a state for user selection
+      :default
+        [{:status :success}
+         (-> game
+             (assoc :phase :run-pick)
+             (assoc :turn player))])))
+
 (defn clear-runs
   "Takes a game state and a list of cells that have changed recently. Returns
-  a 2-vec of the runs cleared and a modified game with any simple (length of
-  exactly 5) runs cleared."
-  [game [from-major from-minor] [to-major to-minor]]
-  (let [cells-to-consider (board/cells-between [from-major from-minor]
-                                               [to-major to-minor])
-        runs (find-runs (:board game) cells-to-consider)]
+  a 2-vec of a success status (with possible run clearance history entires) and
+  a updated game with either runs cleared or in a state ready for the user to
+  specify a run to clear (iff any runs are possible)."
+  [game cells-to-consider]
+  (let [runs (find-runs (:board game) cells-to-consider)
+        p-runs (group-by (fn [[[maj mn] & _]]
+                           (get-in game [:board maj mn :color]))
+                         runs)
+        turn (:turn game)
+        other-turn (other turn)]
     (cond
-      (= (count runs) 0)
-        [game ; No runs exist, take no action.
-         nil]
-      (mutually-exclusive? runs)
-        [(clear-run game (first runs))
-         (first runs)])))
+      (-> p-runs turn seq)
+        (clear-runs-for-player game turn (-> game turn p-runs))
+      (-> p-runs other-turn seq)
+        (clear-runs-for-player game other-turn (-> other-turn p-runs))
+      :default
+        [{:status :success} game])))
 
 (defn urlize
   "Returns a url for viewing a game state."
@@ -182,8 +228,6 @@
 ;24.xg5-g9xa5;d3-b3
 ;  4  8 12 16    24
 ; 5 * 3 + 3 + 9 = 26
-
-
 
 (defn- gipf-pad
   [s]
@@ -300,33 +344,28 @@
       [{:status :failure
         :reason "Not a valid move."}
        game]
-      (let [updated-game (-> game
-                             (update-in [:turn] other)
-                             (assoc :highlight-cell nil)
-                             (assoc :phase :ring-pick)
-                             (flip-between [from-major from-minor]
-                                           [major minor])
-                             (assoc-in [:board from-major from-minor :type]
-                                       :tile)
-                             (assoc-in [:board major minor]
-                                       {:type :ring :color (:turn game)}))
-            [final-game cleared] (clear-runs updated-game
-                                             [from-major from-minor]
-                                             [major minor])
-            ring-move-entry {:action :ring-move
-                             :player player
-                             :start (:highlight-cell game)
-                             :stop [major minor]}
-            history (if (nil? cleared)
-                      (list ring-move-entry)
-                      (list ring-move-entry
-                            {:action :clear-run
-                             :player player
-                             :run-start (first cleared)
-                             :run-end (last cleared)}))]
-        [{:status :success
-          :history history}
-         final-game]))))
+      (-> game
+          (update-in [:turn] other)
+          (assoc :highlight-cell nil)
+          (assoc :phase :ring-pick)
+          (flip-between [from-major from-minor] [major minor])
+          (assoc-in [:board from-major from-minor :type] :tile)
+          (assoc-in [:board major minor] {:type :ring :color (:turn game)})
+          (update-in [:history] #(conj % {:action :ring-move
+                                          :player player
+                                          :start (:highlight-cell game)
+                                          :stop [major minor]}))
+          (clear-runs (board/cells-between [from-major from-minor]
+                                           [major minor]))))))
+(defn pick-run
+  [game player major minor]
+  (let [run (best-run (find-runs (:board game) [[major minor]]) major minor)]
+    (if (nil? run)
+      [{:status :faulure
+        :reason "That cell isn't a part of any run."}
+       game]
+      [{:status :success}
+       (clear-run game run)])))
 
 (defn remove-ring
   [game player major minor]
@@ -371,6 +410,8 @@
       (pick-ring game player major minor)
     (= (:phase game) :ring-drop)
       (drop-ring game player major minor)
+    (= (:phase game) :run-pick)
+      (pick-run game player major minor)
     (= (:phase game) :ring-removal)
       (remove-ring game player major minor)
     :default
