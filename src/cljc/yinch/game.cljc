@@ -55,20 +55,20 @@
   "Returns the member of runs whose center cell is closest to (major, minor) or
   nil if there there is a tie or or runs is empty."
   [runs major minor]
-  (->> runs
-       ; create a seq of [distance run] pairs
-       (map (fn [[[maj1 mn1] [maj2 mn2]]]
-         (let [maj-center (/ (+ maj1 maj2) 2)
-               mn-center (/ (+ mn1 mn2) 2)]
-           [(+ (abs (- maj-center major))
-               (abs (- mn-center minor)))
-            [[maj1 mn1] [maj2 mn2]]])))
-       ; sort it
-       (sort-by first)
-       ; take the one with the lowest dist
-       (first)
-       ; and return the run part of it
-       (second)))
+  (let [sorted-runs (->> runs
+                         ; create a seq of [distance run] pairs
+                         (map (fn [[[maj1 mn1] [maj2 mn2]]]
+                                (let [maj-center (/ (+ maj1 maj2) 2)
+                                      mn-center (/ (+ mn1 mn2) 2)]
+                                  [(+ (abs (- maj-center major))
+                                      (abs (- mn-center minor)))
+                                   [[maj1 mn1] [maj2 mn2]]])))
+                         ; and sort it
+                         (sort-by first))
+        [best-dist best-run] (first sorted-runs)]
+    (if (= best-dist (-> sorted-runs second first))
+      nil
+      best-run)))
 
 (defn- cast-ray
   "Finds the furthest cell along a line (determined by step arg) from a test
@@ -89,7 +89,6 @@
                    [major minor])
           :default
             extremum))))
-
 
 (defn- find-runs*
   "Finds contiguous runs that intersect a single cell. Returns a set of such
@@ -161,14 +160,22 @@
   "Takes a game and a run. Returns the game with the specified run cleared from
   the board and in the ring-removal state for the appropriate player. If removal
   of the run produces a victory condition, return the game in that state."
-  [game [run-start run-end]]
-  (let [run-color (get-in game [:board (run-start 0) (run-start 1) :color])]
-    (reduce (fn [game [major minor]]
-              (assoc-in game [:board major minor] {:type :empty}))
-            (-> game
-                (assoc :turn run-color)
-                (assoc :phase :ring-removal))
-            (board/cells-between run-start run-end))))
+  ([game run]
+   (clear-run game run nil))
+  ([game [run-start run-end] click-position]
+   (let [run-color (get-in game [:board (run-start 0) (run-start 1) :color])]
+     (reduce (fn [game [major minor]]
+               (assoc-in game [:board major minor] {:type :empty}))
+             (-> game
+                 (assoc :turn run-color)
+                 (assoc :phase :ring-removal)
+                 (update-in [:history]
+                   #(conj % {:action :clear-run
+                             :player (:turn game)
+                             :run-start run-start
+                             :run-end run-end
+                             :click-position click-position})))
+             (board/cells-between run-start run-end)))))
 
 (defn- clear-runs-for-player
   "Clears a set of runs belonging to a given player."
@@ -180,11 +187,7 @@
         [{:status :success} game]
       ; we don't require user input to clear the current set of possible runs
       (mutually-exclusive? runs)
-        [{:status :success
-          :history (list {:action :clear-run
-                          :player (:turn game)
-                          :run-start (first first-run)
-                          :run-end (second first-run)})}
+        [{:status :success}
          (clear-run game first-run)]
       ; we do need user input, put the game into a state for user selection
       :default
@@ -275,7 +278,12 @@
                             [(:player move) ((:stop move) 0) ((:stop move) 1)]
                             [(:player move) ((:start move) 0) ((:start move) 1)])
                     :clear-run
-                      script
+                      (if (nil? (:click-position move))
+                        script
+                        (conj script
+                              [(:player move)
+                               ((:click-position move) 0)
+                               ((:click-position move) 1)]))
                     :remove-ring
                       (conj script
                             [(:player move)
@@ -361,11 +369,11 @@
   [game player major minor]
   (let [run (best-run (find-runs (:board game) [[major minor]]) major minor)]
     (if (nil? run)
-      [{:status :faulure
+      [{:status :failure
         :reason "That cell isn't a part of any run."}
        game]
       [{:status :success}
-       (clear-run game run)])))
+       (clear-run game run [major minor])])))
 
 (defn remove-ring
   [game player major minor]

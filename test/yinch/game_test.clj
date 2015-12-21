@@ -3,7 +3,8 @@
             [yinch.board :as board]
             [yinch.board-test :refer [assert-cell]]
             [yinch.game :refer :all]
-            [clojure.pprint :refer [pprint]]))
+            [clojure.pprint :refer [pprint]]
+            [clojure.data :refer [diff]]))
 
 (defn play-script
   ""
@@ -76,8 +77,8 @@
         [status game] (play-script script)
         [s-f6 g-f6] (play-script game [[:white 5 5]])
         [s-e6 g-e6] (play-script game [[:white 5 4]])
-        [c-c6 g-c6] (play-script game [[:white 5 2]])
-        [c-h6 g-h6] (play-script game [[:white 5 8]])]
+        [s-c6 g-c6] (play-script game [[:white 5 2]])
+        [s-h6 g-h6] (play-script game [[:white 5 7]])]
     (is (= (:status status) :success))
     (is (= (:phase game) :run-pick))
     (is (= (:turn game) :white))
@@ -90,7 +91,7 @@
     (is (= (get-in g-f6 [:board 5 5 :type]) :empty))
     (is (= (get-in g-f6 [:board 5 2 :type]) :tile))
 
-    ;(is (= g-f6 g-h6))
+    (is (= (:board g-f6) (:board g-h6)))
 
     (is (= (:status s-e6) :success))
     (is (= (:phase g-e6) :ring-removal))
@@ -98,26 +99,42 @@
     (is (= (get-in g-e6 [:board 5 2 :type]) :empty))
     (is (= (get-in g-e6 [:board 5 7 :type]) :tile))
 
-    ;(is (= g-e6 g-c6))
-    ))
+    (is (= (:board g-e6) (:board g-c6)))))
 
 (deftest test-cross-run
-  (let [script [[:white 5 5] [:black 10 9] [:white 5 4] [:black 10 8]
-                [:white 5 6] [:black 10 7] [:white 5 3] [:black 10 6]
-                [:white 5 7] [:black 9 9] [:black 9 9] [:black 9 10]
-                [:white 5 6] [:white 6 7] [:black 10 9] [:black 9 8]
-                [:white 5 4] [:white 4 3] [:black 10 8] [:black 9 7]
-                [:white 5 7] [:white 4 6] [:black 10 7] [:black 9 6]
-                [:white 5 3] [:white 5 2] [:black 9 10] [:black 8 10]
-                [:white 5 2] [:white 5 1] [:black 9 8] [:black 8 8]
-                [:white 6 7] [:white 6 6] [:black 8 10] [:black 7 10]
-                [:white 6 6] [:white 7 7] [:black 8 8] [:black 8 9]
-                [:white 7 7] [:white 7 6] [:black 9 6] [:black 7 4]
-                [:white 4 3] [:white 4 4] [:black 7 4] [:black 8 5]
-                [:white 4 4] [:white 3 3] [:black 8 5] [:black 8 4]
-                [:white 3 3] [:white 2 2]]
-        [game status] (play-script script)]
-    nil))
+  (let [script [[:white 5 5] [:black 10 6] [:white 5 6] [:black 10 7]
+                [:white 5 4] [:black 10 8] [:white 4 4] [:black 10 9]
+                [:white 6 6] [:black 9 9] [:black 9 9] [:black 9 10]
+                [:white 5 6] [:white 5 7] [:black 10 9] [:black 9 8]
+                [:white 5 4] [:white 5 3] [:black 10 8] [:black 9 7]
+                [:white 5 7] [:white 5 8] [:black 10 7] [:black 9 6]
+                [:white 5 3] [:white 5 2] [:black 9 6] [:black 8 5]
+                [:white 6 6] [:white 7 7] [:black 10 6] [:black 9 5]
+                [:white 7 7] [:white 8 8] [:black 9 7] [:black 8 6]
+                [:white 4 4] [:white 3 3] [:black 8 6] [:black 8 7]
+                [:white 3 3] [:white 2 2] [:black 9 10] [:black 8 10]
+                [:white 5 5] [:white 4 5]]
+        [status game] (play-script script)
+        [s-f6 g-f6] (play-script game [[:white 5 5]])
+        [s-e6 g-e6] (play-script game [[:white 5 4]])
+        [s-e6 g-e5] (play-script game [[:white 4 4]])]
+
+    (is (= (:phase g-e6) :ring-removal))
+    (is (= (:turn g-e6) :white))
+    (is (= (get-in g-e6 [:board 5 3 :type]) :empty))
+    (is (= (get-in g-e6 [:board 5 6 :type]) :empty))
+    (is (= (get-in g-e6 [:board 4 4 :type]) :tile))
+
+    (is (= (:phase g-e5) :ring-removal))
+    (is (= (:turn g-e5) :white))
+    (is (= (get-in g-e5 [:board 5 5 :type]) :empty))
+    (is (= (get-in g-e5 [:board 6 6 :type]) :empty))
+    (is (= (get-in g-e5 [:board 4 4 :type]) :empty))
+    (is (= (get-in g-e5 [:board 5 6 :type]) :tile))
+    (is (= (get-in g-e5 [:board 5 4 :type]) :tile))
+
+    (is (= (:status s-f6) :failure))
+    (is (= (:phase g-f6) :run-pick))))
 
 (deftest test-integration
   (let [script-1 [[:white 6 6]   ; Throw down two rings each.

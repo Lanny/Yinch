@@ -248,7 +248,8 @@
     (fn [e]
       (case (aget e "keyCode")
         68 (print (game/urlize @game-state))
-        83 (print (game/game->script @game-state)))))
+        83 (print (game/game->script @game-state))
+        nil)))
 
   (dommy/listen! (sel1 :#primaryCanvas) :click
     (fn [e]
