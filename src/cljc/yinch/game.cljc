@@ -4,6 +4,8 @@
             [yinch.board :as board])
   (:use [yinch.utils :only [other signum abs]]))
 
+(declare clear-runs)
+
 (defn- line-blocked?
   "Given a game (containing a start position on :highlight-cell) and a target
   cell, calculate if it is valid to hop a ring from :highlight-cell to target
@@ -171,6 +173,12 @@
           (assoc :winner player))
       game)))
 
+(defn- clear-adtl-runs
+  ""
+  [game]
+  (println "haz")
+  (clear-runs game board/cells))
+
 (defn- clear-run
   "Takes a game and a run. Returns the game with the specified run cleared from
   the board and in the ring-removal state for the appropriate player. If removal
@@ -179,18 +187,19 @@
    (clear-run game run nil))
   ([game [run-start run-end] click-position]
    (let [run-color (get-in game [:board (run-start 0) (run-start 1) :color])]
-     (reduce (fn [game [major minor]]
-               (assoc-in game [:board major minor] {:type :empty}))
-             (-> game
-                 (assoc :turn run-color)
-                 (assoc :phase :ring-removal)
-                 (update-in [:history]
-                   #(conj % {:action :clear-run
-                             :player (:turn game)
-                             :run-start run-start
-                             :run-end run-end
-                             :click-position click-position})))
-             (board/cells-between run-start run-end)))))
+     (clear-adtl-runs
+       (reduce (fn [game [major minor]]
+                 (assoc-in game [:board major minor] {:type :empty}))
+               (-> game
+                   (assoc :turn run-color)
+                   (assoc :phase :ring-removal)
+                   (update-in [:history]
+                     #(conj % {:action :clear-run
+                               :player (:turn game)
+                               :run-start run-start
+                               :run-end run-end
+                               :click-position click-position})))
+               (board/cells-between run-start run-end))))))
 
 (defn- clear-runs-for-player
   "Clears a set of runs belonging to a given player."
@@ -207,15 +216,17 @@
             (check-victory player))
       ; we do need user input, put the game into a state for user selection
       :default
-      (-> game
-          (assoc :phase :run-pick)
-          (assoc :turn player)
-          (check-victory player)))))
+        (-> game
+            (assoc :phase :run-pick)
+            (assoc :turn player)
+            (check-victory player)))))
 
 (defn clear-runs
   "Takes a game state and a list of cells that have changed recently."
   [game cells-to-consider]
   (let [runs (find-runs (:board game) cells-to-consider)
+        _ (println cells-to-consider)
+        _ (println runs)
         p-runs (group-by (fn [[[maj mn] & _]]
                            (get-in game [:board maj mn :color]))
                          runs)
@@ -223,7 +234,7 @@
         other-turn (other turn)]
     (cond
       (-> p-runs turn seq)
-        (clear-runs-for-player game turn (-> game turn p-runs))
+        (clear-runs-for-player game turn (-> turn p-runs))
       (-> p-runs other-turn seq)
         (clear-runs-for-player game other-turn (-> other-turn p-runs))
       :default

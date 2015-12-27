@@ -27,6 +27,10 @@
                               1))]
           (cb major minor))))))
 
+(def cells
+  (reduce (partial apply conj)
+          (for-cell (fn [maj mn] [maj mn]))))
+
 (defn cell-valid?
   "Returns true if cell (major, minor) exists on a (platonic) Yinsh board.
   false otherwise."
