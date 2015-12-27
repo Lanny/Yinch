@@ -156,6 +156,21 @@
     (= (count run-membership)
        (* 5 (count runs)))))
 
+(defn- check-victory
+  "Takes a game and a player. Returns the game in a victory state if the player
+  has won, otherwise returns the game unchanged."
+  [game player]
+  (let [ring-count (player (:rings-remaining game))
+        effective-ring-count (if (and (= (:turn game) player)
+                                      (= (:phase game) :ring-removal))
+                               (dec ring-count)
+                               ring-count)]
+    (if (< effective-ring-count 3)
+      (-> game
+          (assoc :phase :victory)
+          (assoc :winner player))
+      game)))
+
 (defn- clear-run
   "Takes a game and a run. Returns the game with the specified run cleared from
   the board and in the ring-removal state for the appropriate player. If removal
@@ -184,23 +199,21 @@
     (cond
       ; no runs exist, take no action. Shouldn't actually come up.
       (= (count runs) 0)
-        [{:status :success} game]
+        game
       ; we don't require user input to clear the current set of possible runs
       (mutually-exclusive? runs)
-        [{:status :success}
-         (clear-run game first-run)]
+        (-> game
+            (clear-run first-run)
+            (check-victory player))
       ; we do need user input, put the game into a state for user selection
       :default
-        [{:status :success}
-         (-> game
-             (assoc :phase :run-pick)
-             (assoc :turn player))])))
+      (-> game
+          (assoc :phase :run-pick)
+          (assoc :turn player)
+          (check-victory player)))))
 
 (defn clear-runs
-  "Takes a game state and a list of cells that have changed recently. Returns
-  a 2-vec of a success status (with possible run clearance history entires) and
-  a updated game with either runs cleared or in a state ready for the user to
-  specify a run to clear (iff any runs are possible)."
+  "Takes a game state and a list of cells that have changed recently."
   [game cells-to-consider]
   (let [runs (find-runs (:board game) cells-to-consider)
         p-runs (group-by (fn [[[maj mn] & _]]
@@ -214,7 +227,7 @@
       (-> p-runs other-turn seq)
         (clear-runs-for-player game other-turn (-> other-turn p-runs))
       :default
-        [{:status :success} game])))
+        game)))
 
 (defn urlize
   "Returns a url for viewing a game state."
@@ -352,19 +365,20 @@
       [{:status :failure
         :reason "Not a valid move."}
        game]
-      (-> game
-          (update-in [:turn] other)
-          (assoc :highlight-cell nil)
-          (assoc :phase :ring-pick)
-          (flip-between [from-major from-minor] [major minor])
-          (assoc-in [:board from-major from-minor :type] :tile)
-          (assoc-in [:board major minor] {:type :ring :color (:turn game)})
-          (update-in [:history] #(conj % {:action :ring-move
-                                          :player player
-                                          :start (:highlight-cell game)
-                                          :stop [major minor]}))
-          (clear-runs (board/cells-between [from-major from-minor]
-                                           [major minor]))))))
+      [{:status :success}
+       (-> game
+           (update-in [:turn] other)
+           (assoc :highlight-cell nil)
+           (assoc :phase :ring-pick)
+           (flip-between [from-major from-minor] [major minor])
+           (assoc-in [:board from-major from-minor :type] :tile)
+           (assoc-in [:board major minor] {:type :ring :color (:turn game)})
+           (update-in [:history] #(conj % {:action :ring-move
+                                           :player player
+                                           :start (:highlight-cell game)
+                                           :stop [major minor]}))
+           (clear-runs (board/cells-between [from-major from-minor]
+                                            [major minor])))])))
 (defn pick-run
   [game player major minor]
   (let [run (best-run (find-runs (:board game) [[major minor]]) major minor)]

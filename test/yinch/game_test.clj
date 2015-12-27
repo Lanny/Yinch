@@ -162,6 +162,7 @@
                 [:white 4 6] [:white 3 6] [:black 9 7] [:black 9 6]]
         [status game] (play-script script)
         [s1 g1] (play-script game [[:white 3 6] [:white 2 6]])]
+    ;(println (urlize game))
     (is (= (-> game :rings-remaining :white) 3))
     (is (= (:phase g1) :victory))
     (is (= (:winner g1) :white))))
