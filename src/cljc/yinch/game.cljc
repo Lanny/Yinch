@@ -452,6 +452,10 @@
       (pick-run game player major minor)
     (= (:phase game) :ring-removal)
       (remove-ring game player major minor)
+    (= (:phase game) :victory)
+      [{:status :failure
+        :reason "The game is over, no futher moves allowed."}
+       game]
     :default
       [{:status :error
         :reason "Game appears to be in an invalid state."
@@ -460,9 +464,10 @@
   
 (defn intrepret-move
   [game move]
-  {:post [(if (= (get-in % [0 :status]) :success)
-            true
-            (= (% 1) game))]}
+  {:post [(case (get-in % [0 :status])
+            :success true
+            :failure (= (% 1) game)
+            :error (nil? %))]}
   (let [[status new-game] (case (:type move)
                             :grid-click
                               (apply intrepret-click game (:click-info move)))]
@@ -471,3 +476,4 @@
       [status
        (update-in new-game [:history] #(apply conj % (:history status)))]
       [status new-game])))
+
