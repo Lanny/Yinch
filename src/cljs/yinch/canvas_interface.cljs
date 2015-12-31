@@ -5,24 +5,27 @@
             [dommy.core :as dommy])
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [dommy.core :refer [sel sel1]])
-  (:use [yinch.utils :only [π cos sin abs half]]))
+  (:use [yinch.utils :only [π cos sin abs half other]]))
 
 (enable-console-print!)
 
 (def bg-color "#888")
-(def border 80)
+(def grid-border 80)
+(def total-border 10)
 (def piece-colors {:black "#000" :white "#FFF"})
 (def lip-colors {:black "#7EC0EE" :white "#7EC0EE"})
+(def ring-slot-color "#555")
 
 (def game-state (atom nil))
 
 (def ^:dynamic *canvas* nil)
 (def ^:dynamic *ctx* nil)
+(def ^:dynamic *perspective* :white)
 (def ^:dynamic *label* true)
 (def ^:dynamic *canvas-width* 800)
 (def ^:dynamic *canvas-height* 600)
-(def ^:dynamic *unit-size* (/ (min (- *canvas-width* border)
-                                   (- *canvas-height* border))
+(def ^:dynamic *unit-size* (/ (min (- *canvas-width* grid-border)
+                                   (- *canvas-height* grid-border))
                               9))
 (def ^:dynamic *tile-size* (* *unit-size* 0.33))
 
@@ -154,7 +157,7 @@
               (throw (str "Unexpected cell type. Cell:" cell)))))))))
 
 (defn- annotate-board!
-  "Draws the 1-11 a-k annotations around the perimeter of the board"
+  "Draws the 1-11 a-k annotations around the perimeter of the board."
   ([] (annotate-board! "#000"
                        14
                        "sans-serif"))
@@ -172,6 +175,35 @@
                 (+ y (/ *unit-size* 2) -3)
                 (board/minor-names minor) color size style))))))
 
+(defn- draw-player-ring-slots!
+  [game player corner]
+  (let [initial-offset (+ total-border *tile-size*)
+        l2l-dist (* (cos (/ π 6)) *unit-size*)
+        [ix y x-step] (if (= corner :ne) 
+                        [(- *canvas-width* initial-offset)
+                         initial-offset
+                         (* l2l-dist -1)]
+                        [initial-offset
+                         (- *canvas-height* initial-offset)
+                         l2l-dist])]
+    (doall
+      (for [idx (range 3)]
+        (let [slot-color (if (-> game
+                                 (:rings-remaining)
+                                 (player)
+                                 (- (- 2 idx))
+                                 (< 3))
+                           (piece-colors player)
+                           ring-slot-color)]
+          (println (-> game (:rings-remaining) (player) (- (- 2 idx))))
+          (circle! (+ ix (* idx x-step))
+                   y *tile-size* 6 slot-color))))))
+
+(defn- draw-ring-slots!
+  "Draws the 6 ring slots and populates them with rings and such."
+  [game]
+  (draw-player-ring-slots! game *perspective* :sw)
+  (draw-player-ring-slots! game (other *perspective*) :ne))
 
 (defn- draw-highlight!
   ""
@@ -193,24 +225,29 @@
 
 (defn init-canvas!
   "Creates a new canvas/context pair given a canvas ID"
-  [canvas-id]
-  (let [element (.getElementById js/document canvas-id)
-        ctx (.getContext element "2d")]
-    {:element element
-     :ctx ctx
-     ; TODO: Don't hardcode these
-     :width 800
-     :height 600 }))
+  ([canvas-id]
+   (init-canvas! canvas-id :white))
+  ([canvas-id perspective]
+   (let [element (.getElementById js/document canvas-id)
+         ctx (.getContext element "2d")]
+     {:element element
+      :ctx ctx
+      :perspective perspective
+      ; TODO: Don't hardcode these
+      :width 800
+      :height 600 })))
 
 (defn draw-board!
   [game canvas-data]
   (binding [*canvas* (:element canvas-data)
-            *ctx* (:ctx canvas-data)]
+            *ctx* (:ctx canvas-data)
+            *perspective* (:perspective canvas-data)]
     (rect! bg-color 0 0 *canvas-width* *canvas-height*)
     (draw-axis-set! (/ π 6))
     (draw-axis-set! (* -1 (/ π 6)))
     (draw-axis-set! (/ π 2))
     (annotate-board!)
+    (draw-ring-slots! game)
     (draw-highlight! game)
     (draw-pieces! game)))
 
