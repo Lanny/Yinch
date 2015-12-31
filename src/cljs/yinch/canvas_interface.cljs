@@ -195,7 +195,6 @@
                                  (< 3))
                            (piece-colors player)
                            ring-slot-color)]
-          (println (-> game (:rings-remaining) (player) (- (- 2 idx))))
           (circle! (+ ix (* idx x-step))
                    y *tile-size* 6 slot-color))))))
 
@@ -204,6 +203,26 @@
   [game]
   (draw-player-ring-slots! game *perspective* :sw)
   (draw-player-ring-slots! game (other *perspective*) :ne))
+
+(defn- draw-phase!
+  "Writes the phase the game is in, in the top-right corner."
+  [game]
+  (text! 
+    total-border
+    (+ total-border 14)
+    (str (if (= (:turn game) :black) "Black " "White ")
+         (case (:phase game)
+           :ring-placement "to place a ring on the board."
+           :ring-pick "to pick a ring to move."
+           :ring-drop
+             (str "to pick a place to drop the ring currently at "
+                  (board/minor-names (-> game :highlight-cell (get 1)))
+                  (board/major-names (-> game :highlight-cell (get 0)))
+                  ".")
+           :run-pick "to pick a run to remove from the board."
+           :ring-removal "to pick a ring to remove from the board."
+           :victory "has won!"))
+    (piece-colors (:turn game)) 14))
 
 (defn- draw-highlight!
   ""
@@ -249,7 +268,8 @@
     (annotate-board!)
     (draw-ring-slots! game)
     (draw-highlight! game)
-    (draw-pieces! game)))
+    (draw-pieces! game)
+    (draw-phase! game)))
 
 (defn consume-state!
   "Listens on a chan for game state updates until the chan is closed. Updates
