@@ -26,14 +26,14 @@
          true
           [status game])))))
 
-#_(deftest test-new-game
+(deftest test-new-game
   "Kind of a dumb test but w/e."
   (let [game (new-game)]
     (is (not (nil? (:board game))))
     (is (:phase game) :ring-placement)
     (is (:turn game) :white)))
 
-#_(deftest test-find-runs
+(deftest test-find-runs
   (let [board (-> (board/make-board)
                   (assoc-in [4 2] {:type :tile :color :white})
                   (assoc-in [4 3] {:type :tile :color :white})
@@ -53,7 +53,7 @@
     (is (= runs2 #{[[4 2] [4 6]] [[4 3] [4 7]]}))
     (is (= runs3 #{}))))
 
-#_(deftest test-mutually-execlusive?
+(deftest test-mutually-execlusive?
   (is (= (mutually-exclusive? #{[[4 2] [4 6]]}) true)) ; Single run
   (is (= (mutually-exclusive? #{[[4 3] [4 7]]}) true)) ; same
 
@@ -64,7 +64,7 @@
   ; tile).
   (is (= (mutually-exclusive? #{[[4 2] [4 6]] [[1 3] [5 1]]}) false)))
 
-#_(deftest test-6-run
+(deftest test-6-run
   (let [script [[:white 5 5] [:black 10 9] [:white 5 4] [:black 10 8]
                 [:white 5 6] [:black 10 7] [:white 5 3] [:black 10 6]
                 [:white 5 7] [:black 9 9] [:black 9 9] [:black 9 10]
@@ -101,7 +101,7 @@
 
     (is (= (:board g-e6) (:board g-c6)))))
 
-#_(deftest test-cross-run
+(deftest test-cross-run
   (let [script [[:white 5 5] [:black 10 6] [:white 5 6] [:black 10 7]
                 [:white 5 4] [:black 10 8] [:white 4 4] [:black 10 9]
                 [:white 6 6] [:black 9 9] [:black 9 9] [:black 9 10]
@@ -136,7 +136,7 @@
     (is (= (:status s-f6) :failure))
     (is (= (:phase g-f6) :run-pick))))
 
-#_(deftest test-victory
+(deftest test-victory
   (let [script [[:white 5 5] [:black 10 9] [:white 5 4] [:black 10 8]
                 [:white 5 6] [:black 10 7] [:white 5 3] [:black 10 6]
                 [:white 5 7] [:black 9 9] [:black 9 9] [:black 9 10]
@@ -178,8 +178,8 @@
                 [:white 6 7] [:white 6 8] [:black 5 6] [:black 5 7]]
         [status game] (play-script script)
         [s1 g1] (play-script game [[:white 4 3] [:white 8 7]])
-        [s2 g2] (play-script g1 [[:white 5 8]])
-        [s3 g3] (play-script g2 [[:white 4 7]])]
+        [s2 g2] (play-script g1 [[:white 6 8]])
+        [s3 g3] (play-script g2 [[:black 5 7]])]
     (is (= (:status status) :success))
     (is (= (:phase game) :ring-pick))
     (is (= (:turn game) :white))
@@ -194,9 +194,12 @@
 
     (is (= (:status s3) :success))
     (is (= (:phase g3) :ring-pick))
-    (is (= (:turn g3) :black))))
+    (is (= (:turn g3) :black))
 
-#_(deftest test-integration
+    (is (= (:black (:rings-remaining g3)) 4))
+    (is (= (:white (:rings-remaining g3)) 4))))
+
+(deftest test-integration
   (let [script-1 [[:white 6 6]   ; Throw down two rings each.
                   [:black 5 2]
                   [:white 6 7]

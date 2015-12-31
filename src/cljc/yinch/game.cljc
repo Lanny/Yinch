@@ -175,9 +175,8 @@
 
 (defn- clear-adtl-runs
   ""
-  [game]
-  (println "haz")
-  (clear-runs game board/cells))
+  [game player]
+  (clear-runs game board/cells player))
 
 (defn- clear-run
   "Takes a game and a run. Returns the game with the specified run cleared from
@@ -187,19 +186,18 @@
    (clear-run game run nil))
   ([game [run-start run-end] click-position]
    (let [run-color (get-in game [:board (run-start 0) (run-start 1) :color])]
-     (clear-adtl-runs
-       (reduce (fn [game [major minor]]
-                 (assoc-in game [:board major minor] {:type :empty}))
-               (-> game
-                   (assoc :turn run-color)
-                   (assoc :phase :ring-removal)
-                   (update-in [:history]
-                     #(conj % {:action :clear-run
-                               :player (:turn game)
-                               :run-start run-start
-                               :run-end run-end
-                               :click-position click-position})))
-               (board/cells-between run-start run-end))))))
+     (reduce (fn [game [major minor]]
+               (assoc-in game [:board major minor] {:type :empty}))
+             (-> game
+                 (assoc :turn run-color)
+                 (assoc :phase :ring-removal)
+                 (update-in [:history]
+                   #(conj % {:action :clear-run
+                             :player (:turn game)
+                             :run-start run-start
+                             :run-end run-end
+                             :click-position click-position})))
+             (board/cells-between run-start run-end)))))
 
 (defn- clear-runs-for-player
   "Clears a set of runs belonging to a given player."
@@ -222,23 +220,28 @@
             (check-victory player)))))
 
 (defn clear-runs
-  "Takes a game state and a list of cells that have changed recently."
-  [game cells-to-consider]
-  (let [runs (find-runs (:board game) cells-to-consider)
-        _ (println cells-to-consider)
-        _ (println runs)
-        p-runs (group-by (fn [[[maj mn] & _]]
-                           (get-in game [:board maj mn :color]))
-                         runs)
-        turn (:turn game)
-        other-turn (other turn)]
-    (cond
-      (-> p-runs turn seq)
-        (clear-runs-for-player game turn (-> turn p-runs))
-      (-> p-runs other-turn seq)
-        (clear-runs-for-player game other-turn (-> other-turn p-runs))
-      :default
-        game)))
+  "Takes a game state and a list of cells that have changed recently. The
+  `first-player` arg may be one of :black or :white, that player will be the
+  first to clear their runs."
+  ([game cells-to-consider]
+   (clear-runs game cells-to-consider (:turn game)))
+  ([game cells-to-consider first-player]
+   {:pre [(contains? #{:black :white} first-player)]}
+   ;(println "zap" first-player)
+   (let [runs (find-runs (:board game) cells-to-consider)
+         p-runs (group-by (fn [[[maj mn] & _]]
+                            (get-in game [:board maj mn :color]))
+                          runs)]
+     (cond
+       (seq (p-runs first-player))
+         (clear-runs-for-player game first-player (p-runs first-player))
+       (seq (p-runs (other first-player)))
+         (clear-runs-for-player game (other first-player)
+                                (p-runs (other first-player)))
+       :default
+        (-> game
+            (assoc :turn (:next-ring-picker game))
+            (dissoc :next-ring-picker))))))
 
 (defn urlize
   "Returns a url for viewing a game state."
@@ -378,7 +381,7 @@
        game]
       [{:status :success}
        (-> game
-           (update-in [:turn] other)
+           (assoc :next-ring-picker (-> game :turn other))
            (assoc :highlight-cell nil)
            (assoc :phase :ring-pick)
            (flip-between [from-major from-minor] [major minor])
@@ -389,7 +392,8 @@
                                            :start (:highlight-cell game)
                                            :stop [major minor]}))
            (clear-runs (board/cells-between [from-major from-minor]
-                                            [major minor])))])))
+                                            [major minor])
+                       (:turn game)))])))
 (defn pick-run
   [game player major minor]
   (let [run (best-run (find-runs (:board game) [[major minor]]) major minor)]
@@ -421,7 +425,8 @@
              (assoc-in [:board major minor] {:type :empty})
              (update-in [:rings-remaining player] dec)
              (assoc :turn (other player))
-             (assoc :phase :ring-pick))])))
+             (assoc :phase :ring-pick)
+             (clear-adtl-runs player))])))
 
 (defn intrepret-click
   "Takes a game, player indication, and grid position and returns a pair
