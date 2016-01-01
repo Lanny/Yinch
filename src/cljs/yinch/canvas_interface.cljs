@@ -15,8 +15,7 @@
 (def piece-colors {:black "#000" :white "#FFF"})
 (def lip-colors {:black "#7EC0EE" :white "#7EC0EE"})
 (def ring-slot-color "#555")
-
-(def game-state (atom nil))
+(def run-marker-color "#800000")
 
 (def ^:dynamic *canvas* nil)
 (def ^:dynamic *ctx* nil)
@@ -70,9 +69,10 @@
 (defn- line!
   "Draw a line from (x1, y1) to (x2, y2) that is `thickness` pixels wide and
   with the given color"
-  [color, thickness, x1, y1, x2, y2]
+  [color thickness cap-style x1 y1 x2 y2]
   (aset *ctx* "strokeStyle" color)
   (aset *ctx* "lineWidth" thickness)
+  (aset *ctx* "lineCap" cap-style)
   (.beginPath *ctx*)
   (.moveTo *ctx* x1 y1)
   (.lineTo *ctx* x2 y2)
@@ -95,8 +95,8 @@
 
 (defn- mark!
   [x y]
-  (line! "#F00" 1 (+ x 4) (+ y 4) (- x 4) (- y 4))
-  (line! "#F00" 1 (+ x 4) (- y 4) (- x 4) (+ y 4)))
+  (line! "#F00" 1 "butt" (+ x 4) (+ y 4) (- x 4) (- y 4))
+  (line! "#F00" 1 "butt" (+ x 4) (- y 4) (- x 4) (+ y 4)))
 
 (defn- text!
   ([x y text] (text! x y text "#000"))
@@ -130,7 +130,7 @@
             y1 (+ cy half-y-run)
             x2 (- cx half-x-run)
             y2 (- cy half-y-run)]
-        (line! "#000" 1 x1 y1 x2 y2))
+        (line! "#000" 1 "butt" x1 y1 x2 y2))
 
       (if (seq remaining)
         (recur (- cx (* (cos θ*) l2l-dist))
@@ -174,6 +174,18 @@
          (text! (- x (/ size 4))
                 (+ y (/ *unit-size* 2) -3)
                 (board/minor-names minor) color size style))))))
+
+(defn- draw-run-marker!
+  [game hover-cell]
+  (if (and (= (:phase game) :run-pick)
+           (not (nil? hover-cell)))
+    (let [run (-> game
+                  (:board)
+                  (game/find-runs [hover-cell])
+                  (game/best-run (hover-cell 0) (hover-cell 1)))
+          [x1 y1] (grid->screen (first run))
+          [x2 y2] (grid->screen (second run))]
+      (line! run-marker-color 4 "round" x1 y1 x2 y2))))
 
 (defn- draw-player-ring-slots!
   [game player corner]
@@ -243,11 +255,13 @@
       (.fillRect *ctx* x1 y1 (* 2 r) (* 2 r)))))
 
 (defn init-canvas!
-  "Creates a new canvas/context pair given a canvas ID"
+  "Creates a new canvas/context pair given a selector to the canvas. The board
+  will be rendered from the perspective of the given player, or white if no
+  palyer is specified."
   ([canvas-id]
    (init-canvas! canvas-id :white))
   ([canvas-id perspective]
-   (let [element (.getElementById js/document canvas-id)
+   (let [element (sel1 canvas-id)
          ctx (.getContext element "2d")]
      {:element element
       :ctx ctx
@@ -257,7 +271,7 @@
       :height 600 })))
 
 (defn draw-board!
-  [game canvas-data]
+  [game canvas-data hover-cell]
   (binding [*canvas* (:element canvas-data)
             *ctx* (:ctx canvas-data)
             *perspective* (:perspective canvas-data)]
@@ -269,63 +283,88 @@
     (draw-ring-slots! game)
     (draw-highlight! game)
     (draw-pieces! game)
+    (draw-run-marker! game @hover-cell)
     (draw-phase! game)))
 
 (defn consume-state!
   "Listens on a chan for game state updates until the chan is closed. Updates
   the screen for each state change."
-  [state-chan]
-  (go
-    (let [canvas-data (init-canvas! "primaryCanvas")]
+  [canvas-data game-state hover-cell]
+  (let [state-chan (async/chan)]
+    (go
       (loop [new-state (async/<! state-chan)]
         (swap! game-state (fn [old-state] new-state))
-        (draw-board! new-state canvas-data)
-        (recur (async/<! state-chan))))))
+        (draw-board! new-state canvas-data hover-cell)
+        (recur (async/<! state-chan))))
+    state-chan))
 
 (defn consume-status!
-  ""
-  [status-chan]
-  (go
-    (loop [status (async/<! status-chan)]
-      (case (:status status)
-        :success
-          nil
-        :failure
-          (js/alert (:reason status))
-        :error
-          (js/alert "Yo, the programmer messed up real bad.")
-        (throw (str "Unexpected status" status)))
-      (recur (async/<! status-chan)))))
+  "Returns a channel with and listens, expecting status maps which are in turn
+  presented to the user."
+  []
+  (let [status-chan (async/chan)]
+    (go
+      (loop [status (async/<! status-chan)]
+        (case (:status status)
+          :success
+            nil
+          :failure
+            (js/alert (:reason status))
+          :error
+            (js/alert "Yo, the programmer messed up real bad.")
+          (throw (str "Unexpected status" status)))
+        (recur (async/<! status-chan))))
+    status-chan))
 
 (defn pump-interaction!
   "Binds event listeners, translates them into user actions (generally clicks
-  on the board) and pumps puts them to `interaction-chan`."
-  [interaction-chan]
-  (dommy/listen! (sel1 :body) :keydown
+  on the board) and pumps puts them to the returned channel."
+  [canvas-data game-state]
+  (let [interaction-chan (async/chan)]
+    (dommy/listen! (:element canvas-data) :click
+      (fn [e]
+        (let [x (aget e "layerX")
+              y (aget e "layerY")
+              [major minor] (screen->grid [x y])
+              player (:turn @game-state)]
+          (async/put! interaction-chan {:type :grid-click
+                                        :click-info [player major minor]}))))
+    interaction-chan))
+
+(defn bind-internal-handlers!
+  "Binds handlers that may change visual or meta-state of the game but which
+  may not produce interactions or alter the state of the game object."
+  [canvas-data game-state hover-cell]
+  (dommy/listen! (:element canvas-data) :keydown
     (fn [e]
       (case (aget e "keyCode")
         68 (print (game/urlize @game-state))
         83 (print (game/game->script @game-state))
         nil)))
 
-  (dommy/listen! (sel1 :#primaryCanvas) :click
+  (dommy/listen! (:element canvas-data) :mousemove
     (fn [e]
       (let [x (aget e "layerX")
             y (aget e "layerY")
-            [major minor] (screen->grid [x y])
-            player (:turn @game-state)]
-        (async/put! interaction-chan {:type :grid-click
-                                      :click-info [player major minor]})))))
+            cell (screen->grid [x y])
+            old-val @hover-cell
+            new-val (swap! hover-cell (constantly cell))]
+        ; If we didn't change the val or if we're not run-picking then there's
+        ; no need to redraw the screen.
+        (if (and (not= new-val old-val)
+                 (= (:phase @game-state) :run-pick))
+          (draw-board! @game-state canvas-data hover-cell))))))
 
 (defn start-rendering!
   "Init canvas and return a 3-vec of channels for communicating state, status,
   and receiving user interactions."
-  []
-  (let [state-chan (async/chan)
-        status-chan (async/chan)
-        interaction-chan (async/chan)]
-    (consume-state! state-chan) 
-    (consume-status! status-chan)
-    (pump-interaction! interaction-chan)
+  [canvas-selector]
+  (let [canvas-data (init-canvas! canvas-selector)
+        game-state (atom nil) ; state of the game "right now"
+        hover-cell (atom nil) ; the cell the user currently has their mouse over
+        state-chan (consume-state! canvas-data game-state hover-cell)
+        status-chan (consume-status!)
+        interaction-chan (pump-interaction! canvas-data game-state)]
+    (bind-internal-handlers! canvas-data game-state hover-cell)
     [state-chan status-chan interaction-chan]))
 

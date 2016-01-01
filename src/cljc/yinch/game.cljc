@@ -53,7 +53,7 @@
   "Major/minor pairs of step-increments that permit valid lines."
   [[1 0] [0 1] [1 1]])
 
-(defn- best-run
+(defn best-run
   "Returns the member of runs whose center cell is closest to (major, minor) or
   nil if there there is a tie or or runs is empty."
   [runs major minor]
@@ -227,7 +227,6 @@
    (clear-runs game cells-to-consider (:turn game)))
   ([game cells-to-consider first-player]
    {:pre [(contains? #{:black :white} first-player)]}
-   ;(println "zap" first-player)
    (let [runs (find-runs (:board game) cells-to-consider)
          p-runs (group-by (fn [[[maj mn] & _]]
                             (get-in game [:board maj mn :color]))

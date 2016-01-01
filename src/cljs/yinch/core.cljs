@@ -20,7 +20,9 @@
             (reader/read-string)
             (start)))))
   ([game]
-   (let [[state-chan status-chan interaction-chan] (ci/start-rendering!)]
+   (let [[state-chan
+          status-chan
+          interaction-chan] (ci/start-rendering! :#primaryCanvas)]
      (async/put! state-chan game)
      (go
        (loop [interaction (async/<! interaction-chan)
