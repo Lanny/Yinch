@@ -1,27 +1,27 @@
 (ns yinch.canvas-interface-3d
-  (:require [goog.math.Matrix :as Matrix])
+  (:require [goog.math :as math])
   (:use [yinch.utils :only [pnr cos sin π]]))
 
 (defn vec3
   [x y z]
-  (new Matrix (array (array x y z)))) 
+  (new math/Matrix (array (array x y z)))) 
 
 (defn mat4
   ([x1  x2  x3  x4
     x5  x6  x7  x8
     x9  x10 x11 x12
     x13 x14 x15 x16]
-   (new Matrix (array
-                 (array x1  x2  x3  x4)
-                 (array x5  x6  x7  x8)
-                 (array x9  x10 x11 x12)
-                 (array x13 x14 x15 x16))))
+   (new math/Matrix (array
+                    (array x1  x2  x3  x4)
+                    (array x5  x6  x7  x8)
+                    (array x9  x10 x11 x12)
+                    (array x13 x14 x15 x16))))
   ([r1 r2 r3 r4]
-   (new Matrix (array
-                 (apply array r1)
-                 (apply array r2)
-                 (apply array r3)
-                 (apply array r4)))))
+   (new math/Matrix (array
+                    (apply array r1)
+                    (apply array r2)
+                    (apply array r3)
+                    (apply array r4)))))
 
 (defn scale-mat4
   ([s] (mat4 s 0 0 0
@@ -38,13 +38,13 @@
   [coll mat]
   (map #(.multipy mat %) coll))
 
-(defn rings-points
+(defn ring-points
   "Returns n equidistant points in the xy plane that are distance 1 from the
   origin."
   [n]
   (vec
-    (for [vert-idx (range resolution)]
-      (let [ang (* 2 π (/ vert-idx resolution))
+    (for [vert-idx (range n)]
+      (let [ang (* 2 π (/ vert-idx n))
             x (cos ang)
             y (sin ang)]
         (vec3 x y 0)))))
@@ -80,8 +80,8 @@
         bottom-plate (reverse (multEach plate bottom-mat))
 
         ring (ring-points resolution)
-        top-ring (multEach top-mat)
-        bottom-ring (multEach bottom-mat)
+        top-ring (multEach ring top-mat)
+        bottom-ring (multEach ring bottom-mat)
         hull (-> (interleave top-ring bottom-ring)
                  (conj (first top-ring))
                  (conj (first bottom-ring)))]
