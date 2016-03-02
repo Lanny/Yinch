@@ -23,10 +23,10 @@
             (reader/read-string)
             (start mode)))))
   ([mode game]
-   (let [start-func (if (= mode "3d") ci3/start-rendering ci/start-rendering)
+   (let [start-func! (if (= mode "3d") ci3/start-rendering! ci/start-rendering!)
          [state-chan
           status-chan
-          interaction-chan] (start-func :#primaryCanvas)]
+          interaction-chan] (start-func! :#primaryCanvas)]
      (async/put! state-chan game)
      (go
        (loop [interaction (async/<! interaction-chan)
