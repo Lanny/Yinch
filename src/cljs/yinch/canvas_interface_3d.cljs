@@ -1,5 +1,6 @@
 (ns yinch.canvas-interface-3d
   (:require [goog.math :as math])
+  (:require-macros [dommy.core :refer [sel sel1]])
   (:use [yinch.utils :only [pnr cos sin π]]))
 
 (defn vec3
@@ -98,7 +99,16 @@
   ""
   [gl game])
 
+(defn init-gl
+  ""
+  [canvas]
+  (let [gl (.getContext canvas "experimental-webgl")]
+    (aset gl "viewportWidth" (aget canvas "width"))
+    (aset gl "viewportHeight" (aget canvas "height"))
+    gl))
+
 (defn start-rendering!
   ""
   [canvas-selector]
-  [nil nil nil])
+  (let [gl (init-gl (sel1 canvas-selector))]
+  [nil nil nil]))
