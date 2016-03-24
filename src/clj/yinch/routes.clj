@@ -13,9 +13,9 @@
 
 (def app
   (-> (handler/site main-routes)
+      (wrap-resource "public")
       ; Some versions of the closure compiler's i18n auto-detect as a different
       ; encoding under some browsers, so we force all javascript statics to
       ; have the UTF-8 encoding.
-      (wrap-resource "public")
       (wrap-content-type {:mime-types {"js" "text/javascript; charset=utf-8"}})
       (wrap-not-modified)))

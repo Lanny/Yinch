@@ -2,8 +2,7 @@
   (:require [yinch.board :as board]
             [yinch.game :as game]
             [cljs.core.async :as async]
-            [dommy.core :as dommy]
-            yglBridge)
+            [dommy.core :as dommy])
   (:require-macros [cljs.core.async.macros :refer [go]]
                    [dommy.core :refer [sel sel1]])
   (:use [yinch.utils :only [π cos sin abs half other]]))
@@ -294,7 +293,6 @@
   (let [state-chan (async/chan)]
     (go
       (loop [new-state (async/<! state-chan)]
-        (yglBridge/start)
         (aset js/window "ggame" new-state)
         (swap! game-state (fn [old-state] new-state))
         (draw-board! new-state canvas-data hover-cell)

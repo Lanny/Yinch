@@ -30,6 +30,6 @@
                         :compiler {:output-dir "resources/public/js"
                                    :output-to "resources/public/js/main.js"
                                    :source-map "resources/public/js/main.map.js"
-                                   :libs ["src/js/yglBridge.js"]
+                                   :libs ["src/js/"]
                                    :optimizations :whitespace
                                    :pretty-print true}}]})
