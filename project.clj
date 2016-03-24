@@ -4,14 +4,14 @@
   :license {:name "GNU General Public License, version 2"
             :url "https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "0.0-3211"
+                 [org.clojure/clojurescript "1.8.34"
                                     :exclusions [org.apache.ant/ant]]
                  [org.clojure/core.async "0.2.374"]
                  [compojure "1.1.6"]
                  [prismatic/dommy "1.1.0"]
                  [com.aphyr/prism "0.1.3"]
                  [com.cemerick/url "0.1.1"]]
-  :plugins [[lein-cljsbuild "1.1.1"]
+  :plugins [[lein-cljsbuild "1.1.3"]
             [lein-ring "0.8.7"]
             [com.aphyr/prism "0.1.3"]]
   ;:hooks [leiningen.cljsbuild]
@@ -30,5 +30,6 @@
                         :compiler {:output-dir "resources/public/js"
                                    :output-to "resources/public/js/main.js"
                                    :source-map "resources/public/js/main.map.js"
+                                   :libs ["src/js/yglBridge.js"]
                                    :optimizations :whitespace
                                    :pretty-print true}}]})

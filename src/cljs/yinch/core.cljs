@@ -15,7 +15,7 @@
   ([mode]
    (let [init-hash (aget js/document "location" "hash")]
      (if (empty? init-hash)
-       (start (game/new-game))
+       (start mode (game/new-game))
        (->> init-hash
             (rest)
             (apply str)
