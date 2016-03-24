@@ -293,7 +293,6 @@
   (let [state-chan (async/chan)]
     (go
       (loop [new-state (async/<! state-chan)]
-        (aset js/window "ggame" new-state)
         (swap! game-state (fn [old-state] new-state))
         (draw-board! new-state canvas-data hover-cell)
         (recur (async/<! state-chan))))
