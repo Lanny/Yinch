@@ -26,13 +26,18 @@
              (not last-occupied)
              hopped)
           true
+        (and (not= (get-in board [major minor :type]) :empty)
+             hopped)
+          true
         (and (= major target-major)
              (= minor target-minor))
           false
         :default
           (recur (+ major major-step)
                  (+ minor minor-step)
-                 (or hopped (not= (get-in board [major minor :type]) :empty))
+                 (or hopped
+                     (and (= (get-in board [major minor :type]) :empty)
+                          last-occupied))
                  (not= (get-in board [major minor :type]) :empty))))))
 
 (defn- flip-between
