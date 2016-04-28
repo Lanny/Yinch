@@ -335,7 +335,7 @@
   "Binds handlers that may change visual or meta-state of the game but which
   may not produce interactions or alter the state of the game object."
   [canvas-data game-state hover-cell]
-  (dommy/listen! (:element canvas-data) :keydown
+  (dommy/listen! js/document :keydown
     (fn [e]
       (case (aget e "keyCode")
         68 (print (game/urlize @game-state))
