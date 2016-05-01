@@ -199,6 +199,20 @@
     (is (= (:black (:rings-remaining g3)) 4))
     (is (= (:white (:rings-remaining g3)) 4))))
 
+(deftest test-double-jump
+  (let [script [[:white 4 5] [:black 4 4] [:white 4 2] [:black 1 3]
+                [:white 2 5] [:black 4 7] [:white 5 8] [:black 7 8]
+                [:white 8 8] [:black 8 7] [:black 4 4] [:black 3 4]
+                [:white 4 2] [:white 3 2] [:black 3 4] [:black 3 5]
+                [:white 4 5]]
+        [s1 g1] (play-script script)             ; Valid game to this point
+        [s2 g2] (play-script g1 [[:white 4 1]])] ; Here's the double jump.
+    (is (= (:status s1) :success))
+
+    (is (= (:status s2) :failure))
+    (is (= (:phase g2) :ring-drop))
+    (is (= (:turn g2) :white))))
+
 (deftest test-integration
   (let [script-1 [[:white 6 6]   ; Throw down two rings each.
                   [:black 5 2]
