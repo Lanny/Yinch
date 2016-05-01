@@ -35,6 +35,32 @@ goog.provide('yinch.glBridge');
   };
 
   yinch.glBridge.CanvasView.prototype = {
+    _initShaderProgram: function() {
+      var fragmentShader = this.loadShader(this._gl, 'shader-fs', 'FRAGMENT_SHADER');
+      var vertexShader = this.loadShader(this._gl, 'shader-vs', 'VERTEX_SHADER');
+
+      shaderProgram = gl.createProgram();
+      gl.attachShader(shaderProgram, vertexShader);
+      gl.attachShader(shaderProgram, fragmentShader);
+      gl.linkProgram(shaderProgram);
+
+      if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+        throw new Error('Could not initialize shaders.');
+      }
+
+        gl.useProgram(shaderProgram);
+
+        shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+
+        shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+        gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+
+        shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+        shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+      
+
+    },
     _init: function() {
 
     },
