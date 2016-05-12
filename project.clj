@@ -4,7 +4,7 @@
   :license {:name "GNU General Public License, version 2"
             :url "https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.8.34"
+                 [org.clojure/clojurescript "0.0-SNAPSHOT"
                                     :exclusions [org.apache.ant/ant]]
                  [org.clojure/core.async "0.2.374"]
                  [compojure "1.1.6"]
@@ -17,8 +17,10 @@
   ;:hooks [leiningen.cljsbuild]
   :source-paths ["src/clj"
                  "src/cljc"]
-  :profiles {:cljs-repl {:main ^:skip-aot yinch.repl}}
-  :aliases {"cljs-repl" ["with-profile" "cljs-repl" "run"]}
+  :profiles {:cljs-repl {:main ^:skip-aot yinch.repl}
+             :test-build {:main ^:skip-aot yinch.build}}
+  :aliases {"cljs-repl" ["with-profile" "cljs-repl" "run"]
+            "test-build" ["with-profile" "test-build" "run"]}
   :ring {:handler yinch.routes/app}
   :cljsbuild {:repl-listen-port 9000
               :repl-launch-commands

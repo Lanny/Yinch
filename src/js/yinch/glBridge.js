@@ -1,4 +1,5 @@
-goog.require('yinch.shaders')
+goog.require('yinch.shaders');
+goog.require('goog.math');
 goog.provide('yinch.glBridge');
 
 ;(function() {
@@ -13,7 +14,7 @@ goog.provide('yinch.glBridge');
 
     var shader = gl.createShader(gl[type]);
     gl.shaderSource(shader, yinch.shaders[name]);
-    gl.combileShader(shader);
+    gl.compileShader(shader);
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       var err = new Error('Error compiling shader named: ' + name);
@@ -26,6 +27,35 @@ goog.provide('yinch.glBridge');
     return shader;
   }
 
+  function initShaderProgram(gl) {
+    var fragmentShader = loadShader(gl, 'shader-fs', 'FRAGMENT_SHADER');
+    var vertexShader = loadShader(gl, 'shader-vs', 'VERTEX_SHADER');
+
+    shaderProgram = gl.createProgram();
+    gl.attachShader(shaderProgram, vertexShader);
+    gl.attachShader(shaderProgram, fragmentShader);
+    gl.linkProgram(shaderProgram);
+
+    if (!this._gl.getProgramParameter(shaderProgram, this._gl.LINK_STATUS)) {
+      throw new Error('Could not initialize shaders.');
+    }
+
+    gl.useProgram(shaderProgram);
+
+    shaderProgram.vertexPositionAttribute = gl.getAttribLocation(
+      shaderProgram, 'aVertexPosition');
+    gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+
+    shaderProgram.vertexColorAttribute = gl.getAttribLocation(
+      shaderProgram, 'aVertexColor');
+    gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+
+    shaderProgram.pMatrixUniform = gl.getUniformLocation(
+      shaderProgram, 'uPMatrix');
+    shaderProgram.mvMatrixUniform = gl.getUniformLocation(
+      shaderProgram, 'uMVMatrix');
+  }
+
   yinch.glBridge.CanvasView = function(canvas, options) {
     this._interactionCallback = function() {};
     this._canvas = canvas;
@@ -35,34 +65,22 @@ goog.provide('yinch.glBridge');
   };
 
   yinch.glBridge.CanvasView.prototype = {
-    _initShaderProgram: function() {
-      var fragmentShader = this.loadShader(this._gl, 'shader-fs', 'FRAGMENT_SHADER');
-      var vertexShader = this.loadShader(this._gl, 'shader-vs', 'VERTEX_SHADER');
-
-      shaderProgram = gl.createProgram();
-      gl.attachShader(shaderProgram, vertexShader);
-      gl.attachShader(shaderProgram, fragmentShader);
-      gl.linkProgram(shaderProgram);
-
-      if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        throw new Error('Could not initialize shaders.');
-      }
-
-        gl.useProgram(shaderProgram);
-
-        shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
-
-        shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
-        gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
-
-        shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-        shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-      
-
-    },
     _init: function() {
+      this._shaderProgram = initShaderProgram(this._gl);
+      console.log('hai!');
+    },
+    _requestAnimationFrame: window.requestAnimationFrame ||
+      function(callback) { window.setTimeout(callback, 1000/60); },
+    _tick: function() {
+      this._drawScene();
+      this._requestAnimationFrame(this._tick.bind(this));
+    },
+    _drawScene: function() {
+      gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+      mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+  
     },
     offerState: function(state) {
     },
