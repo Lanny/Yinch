@@ -16,7 +16,8 @@
             [com.aphyr/prism "0.1.3"]]
   ;:hooks [leiningen.cljsbuild]
   :source-paths ["src/clj"
-                 "src/cljc"]
+                 "src/cljc"
+                 "src/js"]
   :profiles {:cljs-repl {:main ^:skip-aot yinch.repl}
              :test-build {:main ^:skip-aot yinch.build}}
   :aliases {"cljs-repl" ["with-profile" "cljs-repl" "run"]
@@ -31,7 +32,7 @@
               :builds [{:source-paths ["src/cljs" "src/cljc"]
                         :compiler {:output-dir "resources/public/js"
                                    :output-to "resources/public/js/main.js"
-                                   :source-map "resources/public/js/main.map.js"
+                                   :source-map true
                                    :libs ["src/js/"]
-                                   :optimizations :whitespace
+                                   :optimizations :none
                                    :pretty-print true}}]})

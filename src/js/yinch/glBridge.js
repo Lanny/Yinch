@@ -36,7 +36,7 @@ goog.provide('yinch.glBridge');
     gl.attachShader(shaderProgram, fragmentShader);
     gl.linkProgram(shaderProgram);
 
-    if (!this._gl.getProgramParameter(shaderProgram, this._gl.LINK_STATUS)) {
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
       throw new Error('Could not initialize shaders.');
     }
 
@@ -67,7 +67,6 @@ goog.provide('yinch.glBridge');
   yinch.glBridge.CanvasView.prototype = {
     _init: function() {
       this._shaderProgram = initShaderProgram(this._gl);
-      console.log('hai!');
     },
     _requestAnimationFrame: window.requestAnimationFrame ||
       function(callback) { window.setTimeout(callback, 1000/60); },
