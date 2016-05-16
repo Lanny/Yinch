@@ -1,7 +1,8 @@
 (ns yinch.canvas-interface-3d
   (:require [yinch.glBridge :as glb]
             [cljs.core.async :as async]
-            [dommy.core :refer-macros [sel sel1]])
+            [dommy.core :refer-macros [sel sel1]]
+            cljsjs.gl-matrix)
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:use [yinch.utils :only [pnr]]))
 

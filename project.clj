@@ -7,6 +7,7 @@
                  [org.clojure/clojurescript "0.0-SNAPSHOT"
                                     :exclusions [org.apache.ant/ant]]
                  [org.clojure/core.async "0.2.374"]
+                 [cljsjs/gl-matrix "2.3.0-jenanwise-0"]
                  [compojure "1.1.6"]
                  [prismatic/dommy "1.1.0"]
                  [com.aphyr/prism "0.1.3"]
@@ -14,7 +15,6 @@
   :plugins [[lein-cljsbuild "1.1.3"]
             [lein-ring "0.8.7"]
             [com.aphyr/prism "0.1.3"]]
-  ;:hooks [leiningen.cljsbuild]
   :source-paths ["src/clj"
                  "src/cljc"
                  "src/js"]
