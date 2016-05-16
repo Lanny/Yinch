@@ -1,5 +1,5 @@
 goog.require('yinch.shaders');
-//goog.require('goog.math.Matrix');
+goog.require('yinch.Ring');
 goog.provide('yinch.glBridge');
 
 ;(function() {
@@ -58,106 +58,6 @@ goog.provide('yinch.glBridge');
     return shaderProgram;
   }
 
-  function zip() {
-    var totalLength = 0;
-
-    for (var i=0; i<arguments.length; i++) {
-      totalLength += arguments[i].length;
-    }
-
-    var zipped = new Array(totalLength),
-      k = 0,
-      j; 
-    i = 0;
-
-    while (i < totalLength) {
-      for (j=0; j<arguments.length; j++) {
-        if (k < arguments[j].length) {
-          zipped[i] = arguments[j][k];
-          i++
-        }
-      }
-
-      k++;
-    }
-
-    return zipped;
-  };
-
-  function flatten(arr) {
-    var flattened = [];
-
-    for (var i=0; i<arr.length; i++) {
-      for (var k=0; k<arr[i].length; k++) {
-        flattened.push(arr[i][k]);
-      }
-    }
-
-    return flattened;
-  };
-
-  function Ring(gl, segments) {
-    this._vertexPositionBuffer = gl.createBuffer();
-    this._vertexColorBuffer = gl.createBuffer();
-    this.segments = segments;
-
-    this._init(gl);
-  }
-
-  Ring.prototype = {
-    _init: function(gl) {
-      var radsPerSegment = (Math.PI * 2) / this.segments,
-        outervertices = [],
-        innervertices = [],
-        vertices,
-        t;
-
-      for (var i=0; i<this.segments; i++) {
-        t = radsPerSegment * i;
-
-        outervertices.push([Math.cos(t), Math.sin(t), 0]);
-        innervertices.push([Math.cos(t) * 0.9, Math.sin(t) * 0.9, 0]);
-      }
-
-      vertices = zip(outervertices, innervertices);
-      vertices.push(vertices[0], vertices[1]); // Close the circle.
-      vertices = flatten(vertices);
-
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexPositionBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-      this._vertexPositionBuffer.itemSize = 3;
-      this._vertexPositionBuffer.numItems = vertices.length / 3;
-
-      var colors = [];
-      for (var i=0; i < vertices.length / 3; i++) {
-        colors.push(0.5, 0.5, 1.0, 1.0);
-      }
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexColorBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-      this._vertexColorBuffer.itemSize = 4;
-      this._vertexColorBuffer.numItems = colors.length / 4;
-    },
-    draw: function(gl, shaderProgram, mvMatrix, pMatrix) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexPositionBuffer);
-      gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
-                             this._vertexPositionBuffer.itemSize, gl.FLOAT,
-                             false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexColorBuffer);
-      gl.vertexAttribPointer(shaderProgram.vertexColorAttribute,
-                             this._vertexColorBuffer.itemSize, gl.FLOAT,
-                             false, 0, 0);
-
-      gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
-      gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
-
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0,
-                    this._vertexPositionBuffer.numItems);
-    }
-  };
-
   yinch.glBridge.CanvasView = function(canvas, options) {
     this._interactionCallback = function() {};
     this._canvas = canvas;
@@ -178,7 +78,7 @@ goog.provide('yinch.glBridge');
       this._gl.clearColor(0.0, 0.0, 0.0, 1.0);
       this._gl.enable(this._gl.DEPTH_TEST);
 
-      this._drawables.push(new Ring(this._gl, 20));
+      this._drawables.push(new yinch.Ring(this._gl, 20));
 
       this._drawScene();
     },
@@ -197,7 +97,7 @@ goog.provide('yinch.glBridge');
 
       mat4.identity(this._mvMatrix);
       mat4.translate(this._mvMatrix, this._mvMatrix, [-1.5, 0.0, -7.0]);
-      // mat4.rotateX(this._mvMatrix, this._mvMatrix, Math.PI/3);
+      mat4.rotateX(this._mvMatrix, this._mvMatrix, Math.PI/3);
 
       for (var i=0; i<this._drawables.length; i++) {
         this._drawables[i].draw(this._gl, this._shaderProgram, this._mvMatrix,
