@@ -67,7 +67,10 @@ goog.provide('yinch.glBridge');
     this._drawables = [];
 
     this._init();
+
   };
+
+  var rot = 0;
 
   yinch.glBridge.CanvasView.prototype = {
     _init: function() {
@@ -80,13 +83,12 @@ goog.provide('yinch.glBridge');
 
       this._drawables.push(new yinch.Ring(this._gl, 20));
 
-      this._drawScene();
+      this.start();
     },
-    _requestAnimationFrame: window.requestAnimationFrame ||
-      function(callback) { window.setTimeout(callback, 1000/60); },
     _tick: function() {
       this._drawScene();
-      this._requestAnimationFrame(this._tick.bind(this));
+      rot += Math.PI/100;
+      requestAnimationFrame(this._tick.bind(this));
     },
     _drawScene: function() {
       this._gl.viewport(0, 0, this._gl.viewportWidth, this._gl.viewportHeight);
@@ -97,7 +99,7 @@ goog.provide('yinch.glBridge');
 
       mat4.identity(this._mvMatrix);
       mat4.translate(this._mvMatrix, this._mvMatrix, [-1.5, 0.0, -7.0]);
-      mat4.rotateX(this._mvMatrix, this._mvMatrix, Math.PI/3);
+      mat4.rotateX(this._mvMatrix, this._mvMatrix, rot);
 
       for (var i=0; i<this._drawables.length; i++) {
         this._drawables[i].draw(this._gl, this._shaderProgram, this._mvMatrix,
@@ -106,6 +108,7 @@ goog.provide('yinch.glBridge');
 
     },
     start: function() {
+      this._tick();
     },
     offerState: function(state) {
     },

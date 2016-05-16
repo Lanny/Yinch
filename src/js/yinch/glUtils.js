@@ -1,7 +1,7 @@
-goog.provide('yinch.3d-utils');
+goog.provide('yinch.glUtils');
 
 ;(function() {
-  yinch.utils.zip = function() {
+  yinch.glUtils.zip = function() {
     var totalLength = 0;
 
     for (var i=0; i<arguments.length; i++) {
@@ -27,7 +27,7 @@ goog.provide('yinch.3d-utils');
     return zipped;
   };
 
-  yinch.utils.flatten = function(arr) {
+  yinch.glUtils.flatten = function(arr) {
     var flattened = [];
 
     for (var i=0; i<arr.length; i++) {
@@ -38,4 +38,21 @@ goog.provide('yinch.3d-utils');
 
     return flattened;
   };
+
+  yinch.glUtils.addToVertArray = function(arr, v) {
+    for (var i=0; i<arr.length; i++) {
+      console.log(v);
+      vec3.add(arr[i], arr[i], v);
+    }
+
+    return arr;
+  }
+
+  yinch.glUtils.transformMat3VertArray = function(arr, m) {
+    for (var i=0; i<arr.length; i++) {
+      vec3.transformMat3(arr[i], arr[i], m);
+    }
+
+    return arr;
+  }
 })();
