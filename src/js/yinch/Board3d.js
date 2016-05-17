@@ -34,9 +34,13 @@ goog.provide('yinch.Board3d');
 
   function Board(gl) {
     var verts = [],
-      lines = cljs.core.clj__GT_js(
-        yinch.canvas_interface.axis_set(Math.PI/2)),
-      v1, v2;
+      lines, v1, v2, a1, a2, a3;
+
+    a1 = cljs.core.clj__GT_js(yinch.canvas_interface.axis_set(Math.PI/2));
+    a2 = cljs.core.clj__GT_js(yinch.canvas_interface.axis_set(Math.PI/6));
+    a3 = cljs.core.clj__GT_js(yinch.canvas_interface.axis_set(-Math.PI/6));
+
+    lines = yinch.glUtils.flatten([a1, a2, a3]);
 
     for (var i=0; i<lines.length; i++) {
       v1 = lines[i][0];
@@ -47,8 +51,8 @@ goog.provide('yinch.Board3d');
       v2.push(0);
 
       // Scale them down because they're in 2d screen space right now
-      vec3.scale(v1, v1, 1/200);
-      vec3.scale(v2, v2, 1/200);
+      vec3.scale(v1, v1, 1/yinch.canvas_interface._STAR_unit_size_STAR_);
+      vec3.scale(v2, v2, 1/yinch.canvas_interface._STAR_unit_size_STAR_);
 
       // And generate the triangle line for it.
       verts.push.apply(verts, triangleLine(v1, v2, 0.05));

@@ -107,6 +107,7 @@
    (aset *ctx* "font" (str size "px " style))
    (.fillText *ctx* text x y)))
 
+; TODO: Make this independent of the screen-dependant unit size.
 (defn- axis-set*
   "Returns a vector of lines (represented as 2-2-vecs) that mark the 11 axies
   at a given angle."
