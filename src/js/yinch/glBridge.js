@@ -1,4 +1,5 @@
 goog.require('yinch.shaders');
+goog.require('yinch.Board3d');
 goog.require('yinch.Ring');
 goog.provide('yinch.glBridge');
 
@@ -82,6 +83,7 @@ goog.provide('yinch.glBridge');
       this._gl.enable(this._gl.DEPTH_TEST);
 
       this._drawables.push(new yinch.Ring(this._gl, 20));
+      this._drawables.push(new yinch.Board3d(this._gl));
 
       this.start();
     },

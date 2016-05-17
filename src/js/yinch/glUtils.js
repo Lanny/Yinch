@@ -1,6 +1,18 @@
 goog.provide('yinch.glUtils');
 
 ;(function() {
+  yinch.glUtils.extend = function() {
+    var targetObj = arguments[0];
+
+    for (var i=1; i<arguments.length; i++) {
+      for (var key in arguments[i]) {
+        targetObj[key] = arguments[i][key];
+      }
+    }
+
+    return targetObj;
+  };
+
   yinch.glUtils.zip = function() {
     var totalLength = 0;
 
@@ -41,7 +53,6 @@ goog.provide('yinch.glUtils');
 
   yinch.glUtils.addToVertArray = function(arr, v) {
     for (var i=0; i<arr.length; i++) {
-      console.log(v);
       vec3.add(arr[i], arr[i], v);
     }
 
