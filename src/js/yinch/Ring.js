@@ -93,7 +93,6 @@ goog.provide('yinch.Ring');
       this.geometry.push(new yinch.Geometry(gl, vs));
 
       vs = [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0];
-      this.geometry.push(new yinch.Geometry(gl, vs, gl.LINES));
     },
     draw: function(gl, shaderProgram, mvMatrix, pMatrix) {
       for (var i=0; i<this.geometry.length; i++) {

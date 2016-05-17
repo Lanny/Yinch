@@ -107,9 +107,9 @@
    (aset *ctx* "font" (str size "px " style))
    (.fillText *ctx* text x y)))
 
-(defn- draw-axis-set!
-  "Draw the set of 11 parallel lines at angle θ (in radians) that form one of
-  the three axies making up the grid"
+(defn- axis-set*
+  "Returns a vector of lines (represented as 2-2-vecs) that mark the 11 axies
+  at a given angle."
   [θ]
   (let [center-x (half *canvas-width*)
         center-y (half *canvas-height*)
@@ -123,19 +123,32 @@
                       (+ center-y))]
     (loop [cx cxInitial
            cy cyInitial
+           lines []
            [line-length & remaining] board/axis-lengths]
       (let [half-x-run (* (cos θ) (half line-length) *unit-size*)
             half-y-run (* (sin θ) (half line-length) *unit-size*)
             x1 (+ cx half-x-run)
             y1 (+ cy half-y-run)
             x2 (- cx half-x-run)
-            y2 (- cy half-y-run)]
-        (line! "#000" 1 "butt" x1 y1 x2 y2))
+            y2 (- cy half-y-run)
+            new-lines (conj lines [[x1 y1] [x2 y2]])]
+        (if (seq remaining)
+          (recur (- cx (* (cos θ*) l2l-dist))
+                 (- cy (* (sin θ*) l2l-dist))
+                 new-lines
+                 remaining)
+          new-lines)))))
 
-      (if (seq remaining)
-        (recur (- cx (* (cos θ*) l2l-dist))
-               (- cy (* (sin θ*) l2l-dist))
-               remaining)))))
+(def axis-set
+  (memoize axis-set*))
+
+(defn- draw-axis-set!
+  "Draw the set of 11 parallel lines at angle θ (in radians) that form one of
+  the three axies making up the grid"
+  [θ]
+  (doall
+    (for [[[x1 y1] [x2 y2]] (axis-set θ)]
+      (line! "#000" 1 "butt" x1 y1 x2 y2))))
 
 (defn- draw-pieces!
   ""

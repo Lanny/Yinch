@@ -2,17 +2,16 @@ goog.require('yinch.glUtils');
 goog.provide('yinch.Geometry');
 
 ;(function() {
-  function Geometry(gl, verticies) {
+  function Geometry(gl, verticies, drawType) {
     this._vertexPositionBuffer = gl.createBuffer();
     this._vertexColorBuffer = gl.createBuffer();
+    this._drawType = drawType || gl.TRIANGLE_STRIP;
 
     this._init(gl, verticies);
   }
 
   Geometry.prototype = {
-    _init: function(gl, vertices, drawType) {
-      this._drawType = drawType || gl.TRIANGLE_STRIP;
-
+    _init: function(gl, vertices) {
       gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexPositionBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
       this._vertexPositionBuffer.itemSize = 3;

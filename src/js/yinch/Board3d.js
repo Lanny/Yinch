@@ -1,6 +1,9 @@
 goog.require('yinch.glUtils');
 goog.require('yinch.Geometry');
+goog.require('yinch.canvas_interface');
+goog.require('cljs.core');
 goog.provide('yinch.Board3d');
+
 
 ;(function() {
   function triangleLine(v1, v2, thickness) {
@@ -21,8 +24,8 @@ goog.provide('yinch.Board3d');
       p1,
       p2,
       p3,
-      //vec3.clone(p2),
-      //vec3.clone(p3),
+      vec3.clone(p2),
+      vec3.clone(p3),
       p4
     ];
 
@@ -30,13 +33,30 @@ goog.provide('yinch.Board3d');
   }
 
   function Board(gl) {
-    var verts = [];
+    var verts = [],
+      lines = cljs.core.clj__GT_js(
+        yinch.canvas_interface.axis_set(Math.PI/2)),
+      v1, v2;
 
-    verts.push.apply(verts, triangleLine([0,0,0], [1.0, 0, 0], 0.2));
-    console.log(verts);
+    for (var i=0; i<lines.length; i++) {
+      v1 = lines[i][0];
+      v2 = lines[i][1];
+
+      // Add a third dimention so they're vectors we can work with
+      v1.push(0);
+      v2.push(0);
+
+      // Scale them down because they're in 2d screen space right now
+      vec3.scale(v1, v1, 1/200);
+      vec3.scale(v2, v2, 1/200);
+
+      // And generate the triangle line for it.
+      verts.push.apply(verts, triangleLine(v1, v2, 0.05));
+    }
+
     verts = yinch.glUtils.flatten(verts);
 
-    yinch.Geometry.call(this, gl, verts);//, gl.TRIANGLES);
+    yinch.Geometry.call(this, gl, verts, gl.TRIANGLES);
   }
 
   Board.prototype = {};
