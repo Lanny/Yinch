@@ -1,6 +1,10 @@
+goog.require('goog.events');
+goog.require('goog.math');
+
 goog.require('yinch.shaders');
 goog.require('yinch.Board3d');
 goog.require('yinch.Ring');
+
 goog.provide('yinch.glBridge');
 
 ;(function() {
@@ -67,11 +71,15 @@ goog.provide('yinch.glBridge');
     this._pMatrix = mat4.create();
     this._drawables = [];
 
+    this._rotRate = Math.PI / 400;
+    this._zoomRate = 1 / 100;
+    this._rX = -Math.PI/4;
+    this._rY = 0;
+    this._rZ = 0;
+    this._zoomDist = -7.0;
+
     this._init();
-
   };
-
-  var rot = 0;
 
   yinch.glBridge.CanvasView.prototype = {
     _init: function() {
@@ -85,23 +93,72 @@ goog.provide('yinch.glBridge');
       this._drawables.push(new yinch.Ring(this._gl, 20));
       this._drawables.push(new yinch.Board3d(this._gl));
 
+      this._bindHandlers();
+
       this.start();
+    },
+    _bindHandlers: function() {
+      this._mouseIsDown = false;
+      this._lastX = null; 
+      this._lastY = null; 
+
+      goog.events.listen(this._canvas, goog.events.EventType.MOUSEDOWN,
+                         this._onMouseDown.bind(this));
+      goog.events.listen(this._canvas, goog.events.EventType.MOUSEUP,
+                         this._onMouseUp.bind(this));
+      goog.events.listen(this._canvas, goog.events.EventType.MOUSEMOVE,
+                         this._onMouseMove.bind(this));
+      goog.events.listen(this._canvas, goog.events.EventType.WHEEL,
+                         this._onScroll.bind(this));
+    },
+    _onMouseDown: function(e) {
+      this._lastX = e.offsetX;
+      this._lastY = e.offsetY;
+      this._mouseIsDown = true;
+    },
+    _onMouseUp: function(e) {
+      this._mouseIsDown = false;
+      this._lastX = null; 
+      this._lastY = null; 
+    },
+    _onMouseMove: function(e) {
+      if (this._mouseIsDown !== true) {
+        return;
+      }
+      var dx = this._lastX - e.offsetX,
+        dy = this._lastY - e.offsetY;
+
+      this._lastX = e.offsetX;
+      this._lastY = e.offsetY;
+
+      this._rZ += dx * this._rotRate;
+      this._rX -= dy * this._rotRate;
+    },
+    _onScroll: function(e) {
+      this._zoomDist = goog.math.clamp(
+        -100.0,
+        this._zoomDist - (e.event_.deltaY * this._zoomRate),
+        -1.0);
+
+      e.preventDefault();
     },
     _tick: function() {
       this._drawScene();
-      rot += Math.PI/100;
       requestAnimationFrame(this._tick.bind(this));
     },
     _drawScene: function() {
       this._gl.viewport(0, 0, this._gl.viewportWidth, this._gl.viewportHeight);
       this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
 
+      mat4.identity(this._mvMatrix);
+      mat4.translate(this._mvMatrix, this._mvMatrix, [0.0, 0.0, this._zoomDist]);
+
+      mat4.rotateX(this._mvMatrix, this._mvMatrix, this._rX);
+      mat4.rotateY(this._mvMatrix, this._mvMatrix, this._rY);
+      mat4.rotateZ(this._mvMatrix, this._mvMatrix, this._rZ);
+
       var aspectRatio = this._gl.viewportWidth / this._gl.viewportHeight;
       mat4.perspective(this._pMatrix, 45, aspectRatio, 0.1, 100.0);
-
-      mat4.identity(this._mvMatrix);
-      mat4.translate(this._mvMatrix, this._mvMatrix, [-1.5, 0.0, -7.0]);
-      mat4.rotateX(this._mvMatrix, this._mvMatrix, rot);
 
       for (var i=0; i<this._drawables.length; i++) {
         this._drawables[i].draw(this._gl, this._shaderProgram, this._mvMatrix,
