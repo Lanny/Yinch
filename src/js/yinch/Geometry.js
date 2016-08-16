@@ -17,16 +17,7 @@ goog.provide('yinch.Geometry');
       this._vertexPositionBuffer.itemSize = 3;
       this._vertexPositionBuffer.numItems = vertices.length / 3;
 
-      var colors = [];
-      for (var i=0; i < vertices.length / 3; i++) {
-        colors.push(1.0, 0.0, 1.0, 1.0);
-      }
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexColorBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-      this._vertexColorBuffer.itemSize = 4;
-      this._vertexColorBuffer.numItems = colors.length / 4;
-
+      this.setSolidColor(gl, [1.0, 0.0, 1.0, 1.0]);
     },
     draw: function(gl, shaderProgram, mvMatrix, pMatrix) {
       gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexPositionBuffer);
@@ -43,6 +34,25 @@ goog.provide('yinch.Geometry');
       gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
 
       gl.drawArrays(this._drawType, 0, this._vertexPositionBuffer.numItems);
+    },
+    setVertexColorBuffer: function(buffer) {
+      this._vertexColorBuffer = buffer;
+    },
+    setSolidColor: function(gl, color) {
+      var buffer = gl.createBuffer(),
+        colors = [];
+
+      for (var i=0; i < this._vertexPositionBuffer.numItems; i++) {
+        colors.push.apply(colors, color);
+      }
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
+      buffer.itemSize = color.length;
+      buffer.numItems = colors.length / color.length;
+
+      this.setVertexColorBuffer(buffer);
     }
   }
 

@@ -57,6 +57,7 @@ goog.provide('yinch.Board3d');
     verts = yinch.glUtils.flatten(verts);
 
     yinch.Geometry.call(this, gl, verts, gl.TRIANGLES);
+    this.setSolidColor(gl, [0.0, 0.0, 0.0, 1.0]);
   }
 
   Board.prototype = {};
