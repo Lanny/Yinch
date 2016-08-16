@@ -87,7 +87,7 @@ goog.provide('yinch.glBridge');
       this._gl.viewportWidth = this._canvas.width;
       this._gl.viewportHeight = this._canvas.height;
 
-      this._gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      this._gl.clearColor(0.5, 0.5, 0.5, 1.0);
       this._gl.enable(this._gl.DEPTH_TEST);
 
       this._drawables.push(new yinch.Ring(this._gl, 20));

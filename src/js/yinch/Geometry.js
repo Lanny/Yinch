@@ -19,7 +19,7 @@ goog.provide('yinch.Geometry');
 
       var colors = [];
       for (var i=0; i < vertices.length / 3; i++) {
-        colors.push(0.5, 0.5, 1.0, 1.0);
+        colors.push(1.0, 0.0, 1.0, 1.0);
       }
 
       gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexColorBuffer);
