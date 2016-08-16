@@ -3,9 +3,9 @@ goog.require('yinch.Geometry');
 goog.provide('yinch.Ring');
 
 ;(function() {
-  var OUTER_RADIUS = 1.0,
-    INNER_RADIUS = 0.8,
-    THICKNESS = 0.2,
+  var OUTER_RADIUS = 0.4,
+    INNER_RADIUS = 0.3,
+    THICKNESS = 0.1,
     FLIP_Y = mat4.create();
 
   mat4.rotateY(FLIP_Y, FLIP_Y, Math.PI);
@@ -68,26 +68,27 @@ goog.provide('yinch.Ring');
 
       // Top plate
       vs = makePlate(this.segments, INNER_RADIUS, OUTER_RADIUS);
-      yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS/2]);
+      yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS]);
       vs = yinch.glUtils.flatten(vs);
 
       this.geometry.push(new yinch.Geometry(gl, vs));
 
       // Bottom plate
       vs = makePlate(this.segments, INNER_RADIUS, OUTER_RADIUS);
-      yinch.glUtils.addToVertArray(vs, [0, 0, -THICKNESS/2]);
       vs = yinch.glUtils.flatten(vs);
 
       this.geometry.push(new yinch.Geometry(gl, vs));
 
       // Inner band
       vs = makeBand(this.segments, INNER_RADIUS, THICKNESS);
+      yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS/2]);
       vs = yinch.glUtils.flatten(vs);
 
       this.geometry.push(new yinch.Geometry(gl, vs));
 
       // Outer band
       vs = makeBand(this.segments, OUTER_RADIUS, THICKNESS);
+      yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS/2]);
       vs = yinch.glUtils.flatten(vs);
 
       this.geometry.push(new yinch.Geometry(gl, vs));
