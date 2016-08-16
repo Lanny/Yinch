@@ -107,15 +107,15 @@
    (aset *ctx* "font" (str size "px " style))
    (.fillText *ctx* text x y)))
 
-; TODO: Make this independent of the screen-dependant unit size.
-(defn- axis-set*
+(defn unit-axis-set*
   "Returns a vector of lines (represented as 2-2-vecs) that mark the 11 axies
-  at a given angle."
+  at a given angle. Coordinates are such that each line-segment formed by
+  intersection of 3 axis-sets will be length 1."
   [θ]
-  (let [center-x (half *canvas-width*)
-        center-y (half *canvas-height*)
+  (let [center-x 0
+        center-y 0
         θ* (+ θ (half π))
-        l2l-dist (* (cos (/ π 6)) *unit-size*) ; distance between parallels 
+        l2l-dist (cos (/ π 6)) ; distance between parallels 
         cxInitial (-> (* 5 l2l-dist) ; distance from center to edge
                       (* (cos θ*)) ; the x component thereof
                       (+ center-x)) ; from distance to position on screen
@@ -126,8 +126,8 @@
            cy cyInitial
            lines []
            [line-length & remaining] board/axis-lengths]
-      (let [half-x-run (* (cos θ) (half line-length) *unit-size*)
-            half-y-run (* (sin θ) (half line-length) *unit-size*)
+      (let [half-x-run (* (cos θ) (half line-length))
+            half-y-run (* (sin θ) (half line-length))
             x1 (+ cx half-x-run)
             y1 (+ cy half-y-run)
             x2 (- cx half-x-run)
@@ -139,6 +139,23 @@
                  new-lines
                  remaining)
           new-lines)))))
+
+(def unit-axis-set
+  (memoize unit-axis-set*))
+
+; TODO: Make this independent of the screen-dependant unit size.
+(defn- axis-set*
+  "Returns a vector of lines (represented as 2-2-vecs) that mark the 11 axies
+  at a given angle. Coordinates are contingent on current screen measurements
+  and unit-size values."
+  [θ]
+  (let [center-x (half *canvas-width*)
+        center-y (half *canvas-height*)]
+    (vec
+      (for [[[x1 y1] [x2 y2]] (unit-axis-set* θ)]
+        [[(+ (* x1 *unit-size*) center-x) (+ (* y1 *unit-size*) center-y)]
+         [(+ (* x2 *unit-size*) center-x) (+ (* y2 *unit-size*) center-y)]]))))
+
 
 (def axis-set
   (memoize axis-set*))
