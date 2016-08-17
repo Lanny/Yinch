@@ -69,11 +69,10 @@ goog.provide('yinch.glUtils');
 
 
   yinch.glUtils.gridToMVCoords = function(maj, mn) {
-    var l2lDist = Math.cos(Math.PI / 6),
-      dMaj = maj - 5.0,
+    var dMaj = maj - 5.0,
       dMn = mn - 5.0,
-      x = dMaj * l2lDist,
-      y = -dMaj - (-dMn * l2lDist);
+      x = dMn * Math.cos(Math.PI / 6),
+      y = -dMaj - (-dMn * Math.sin(Math.PI / 6));
 
     return [x, y];
   };
