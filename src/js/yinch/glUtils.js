@@ -66,4 +66,15 @@ goog.provide('yinch.glUtils');
 
     return arr;
   }
+
+
+  yinch.glUtils.gridToMVCoords = function(maj, mn) {
+    var l2lDist = Math.cos(Math.PI / 6),
+      dMaj = maj - 5.0,
+      dMn = mn - 5.0,
+      x = dMaj * l2lDist,
+      y = -dMaj - (-dMn * l2lDist);
+
+    return [x, y];
+  };
 })();

@@ -59,7 +59,12 @@ goog.provide('yinch.Ring');
     this.segments = segments;
     this.geometry = [];
 
+    this._maj = 5;
+    this._mn = 5;
+
     this._init(gl);
+
+    gr = this;
   }
 
   Ring.prototype = {
@@ -95,9 +100,20 @@ goog.provide('yinch.Ring');
 
       vs = [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0];
     },
+    setGridPos: function(maj, mn) {
+      this._maj = maj;
+      this._mn = mn;
+    },
     draw: function(gl, shaderProgram, mvMatrix, pMatrix) {
+      var posMatrix = mat4.create(),
+        transVec = yinch.glUtils.gridToMVCoords(this._maj, this._mn);
+
+      transVec.push(0.0); // Add a 0 for the Z dim
+
+      mat4.translate(posMatrix, mvMatrix, transVec); 
+
       for (var i=0; i<this.geometry.length; i++) {
-        this.geometry[i].draw(gl, shaderProgram, mvMatrix, pMatrix);
+        this.geometry[i].draw(gl, shaderProgram, posMatrix, pMatrix);
       }
     }
   };
