@@ -4,6 +4,7 @@ goog.require('goog.math');
 goog.require('yinch.shaders');
 goog.require('yinch.Board3d');
 goog.require('yinch.Ring');
+goog.require('yinch.CompassRose');
 
 goog.provide('yinch.glBridge');
 
@@ -92,6 +93,7 @@ goog.provide('yinch.glBridge');
 
       this._drawables.push(new yinch.Ring(this._gl, 20));
       this._drawables.push(new yinch.Board3d(this._gl));
+      this._drawables.push(new yinch.CompassRose(this._gl));
 
       this._bindHandlers();
 
