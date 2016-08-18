@@ -74,7 +74,7 @@ goog.provide('yinch.glBridge');
 
     this._rotRate = Math.PI / 400;
     this._zoomRate = 1 / 100;
-    this._rX = -Math.PI/4;
+    this._rX = -1.0;
     this._rY = 0;
     this._rZ = 0;
     this._zoomDist = -7.0;
