@@ -124,14 +124,6 @@ goog.provide('yinch.glBridge');
                                                   this._mvMatrix,
                                                   this._pMatrix,
                                                   this._zoomDist);
-      //coords = yinch.glUtils.screenToMVCoords(0.0, 0.0,
-      //                                            this._mvMatrix,
-      //                                            this._pMatrix,
-      //                                            this._zoomDist);
-      console.log(coords);
-      gcr = this._cr;
-      this._cr.setModelPosition(coords);
-
       this._lastX = e.offsetX;
       this._lastY = e.offsetY;
       this._mouseIsDown = true;

@@ -78,34 +78,42 @@ goog.provide('yinch.glUtils');
   };
 
   yinch.glUtils.screenToMVCoords = function(NDCX, NDCY, mvMatrix, pMatrix) {
-    var vpMat = [],
-      invVPMat = [],
-      pos = [NDCX, NDCY, 0.0, 1.0];
+    /* Adventures in not really knowing how to do 3d graphics:
+     * Check it, if we take a screen coord, make a fake NDC vector out of it,
+     * and multiply it by the combined model-view and perspective matrix we
+     * get back _a_ solution to the line projected from the screen into the
+     * scene. HOWEVER when the only meaningful place to click is on a 2D board
+     * the solution we actually want is the one with Z=0. If I was better at
+     * math I could come up with an analytic solution to that. BUT IM NOT so
+     * instead I compute the "camera position", the vector between it and the
+     * given solution, scale that (camera-to-solution) vector by the necessary
+     * value such that when added to the solution vector has Z=0. Meaning that
+     * the sum this vector and the one know solution is the positon on the
+     * game board that lies on the line from the click position projecting
+     * into the scene.
+     */
+    var invVPMat = mat4.create(),
+      invMVMat = mat4.create(),
+      pos = [NDCX, NDCY, 0.0, 1.0],
+      viewLine = vec3.create();
 
-    mat4.multiply(vpMat, pMatrix, mvMatrix);
-    mat4.invert(invVPMat, vpMat);
-
-    vec3.transformMat4(pos, pos, invVPMat);
-
-    //var cPos = [0, 0, 0.0, 0];
-    //vec3.transformMat4(cPos, cPos, mvMatrix);
-    var invMVMat = mat4.create();
+    // Compute camera position
     mat4.invert(invMVMat, mvMatrix);
     var cPos = [invMVMat[12], invMVMat[13], invMVMat[14], invMVMat[15]];
 
-    var viewLine = vec3.create();
+    // Compute a solution to the click-line
+    mat4.multiply(invVPMat, pMatrix, mvMatrix);
+    mat4.invert(invVPMat, invVPMat);
+    vec3.transformMat4(pos, pos, invVPMat);
+
+
+    // Calculate vector between camera and known solution
     vec3.subtract(viewLine, pos, cPos);
-    console.log('cPos:', cPos);
 
+    // Scale delta vector and add it to know solution to produce a new solution
+    // with Z=0
     var scaleFactor = 0 - pos[2] / viewLine[2];
-
-    console.log('pos', pos);
-    console.log('viewLine', viewLine);
-    console.log('sf', scaleFactor);
     vec3.scale(viewLine, viewLine, scaleFactor);
-
-    console.log('vl:', viewLine);
-
     vec3.add(pos, pos, viewLine);
 
     return pos;
