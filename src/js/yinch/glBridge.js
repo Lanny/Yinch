@@ -2,6 +2,7 @@ goog.require('goog.events');
 goog.require('goog.math');
 
 goog.require('yinch.shaders');
+goog.require('yinch.glUtils');
 goog.require('yinch.Board3d');
 goog.require('yinch.Ring');
 goog.require('yinch.CompassRose');
@@ -91,9 +92,11 @@ goog.provide('yinch.glBridge');
       this._gl.clearColor(0.5, 0.5, 0.5, 1.0);
       this._gl.enable(this._gl.DEPTH_TEST);
 
+      this._cr = new yinch.CompassRose(this._gl);
+
       this._drawables.push(new yinch.Ring(this._gl, 20));
       this._drawables.push(new yinch.Board3d(this._gl));
-      this._drawables.push(new yinch.CompassRose(this._gl));
+      this._drawables.push(this._cr);
 
       this._bindHandlers();
 
@@ -114,6 +117,21 @@ goog.provide('yinch.glBridge');
                          this._onScroll.bind(this));
     },
     _onMouseDown: function(e) {
+      var NDCX = (e.offsetX / this._gl.viewportWidth - 0.5) * 2,
+        NDCY = (0.5 - e.offsetY / this._gl.viewportHeight) * 2;
+
+      var coords = yinch.glUtils.screenToMVCoords(NDCX, NDCY,
+                                                  this._mvMatrix,
+                                                  this._pMatrix,
+                                                  this._zoomDist);
+      //coords = yinch.glUtils.screenToMVCoords(0.0, 0.0,
+      //                                            this._mvMatrix,
+      //                                            this._pMatrix,
+      //                                            this._zoomDist);
+      console.log(coords);
+      gcr = this._cr;
+      this._cr.setModelPosition(coords);
+
       this._lastX = e.offsetX;
       this._lastY = e.offsetY;
       this._mouseIsDown = true;

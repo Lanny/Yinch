@@ -76,4 +76,38 @@ goog.provide('yinch.glUtils');
 
     return [x, y];
   };
+
+  yinch.glUtils.screenToMVCoords = function(NDCX, NDCY, mvMatrix, pMatrix) {
+    var vpMat = [],
+      invVPMat = [],
+      pos = [NDCX, NDCY, 0.0, 1.0];
+
+    mat4.multiply(vpMat, pMatrix, mvMatrix);
+    mat4.invert(invVPMat, vpMat);
+
+    vec3.transformMat4(pos, pos, invVPMat);
+
+    //var cPos = [0, 0, 0.0, 0];
+    //vec3.transformMat4(cPos, cPos, mvMatrix);
+    var invMVMat = mat4.create();
+    mat4.invert(invMVMat, mvMatrix);
+    var cPos = [invMVMat[12], invMVMat[13], invMVMat[14], invMVMat[15]];
+
+    var viewLine = vec3.create();
+    vec3.subtract(viewLine, pos, cPos);
+    console.log('cPos:', cPos);
+
+    var scaleFactor = 0 - pos[2] / viewLine[2];
+
+    console.log('pos', pos);
+    console.log('viewLine', viewLine);
+    console.log('sf', scaleFactor);
+    vec3.scale(viewLine, viewLine, scaleFactor);
+
+    console.log('vl:', viewLine);
+
+    vec3.add(pos, pos, viewLine);
+
+    return pos;
+  };
 })();

@@ -4,6 +4,7 @@ goog.provide('yinch.CompassRose');
 ;(function() {
   function CompassRose(gl, scale) {
     this._scale = scale || 1.0;
+    this._position = mat4.create();
 
     this._init(gl);
   }
@@ -39,8 +40,15 @@ goog.provide('yinch.CompassRose');
 
       this._geometry.setVertexColorBuffer(colorBuffer);
     },
+    setModelPosition: function(transVec) {
+      mat4.identity(this._position);
+      mat4.translate(this._position, this._position, transVec);
+    },
     draw: function(gl, shaderProgram, mvMatrix, pMatrix) {
-      this._geometry.draw(gl, shaderProgram, mvMatrix, pMatrix);
+      var mvPos = mat4.create();
+      mat4.multiply(mvPos, mvMatrix, this._position); 
+      
+      this._geometry.draw(gl, shaderProgram, mvPos, pMatrix);
     }
   };
 
