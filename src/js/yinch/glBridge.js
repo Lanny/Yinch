@@ -93,8 +93,9 @@ goog.provide('yinch.glBridge');
       this._gl.enable(this._gl.DEPTH_TEST);
 
       this._cr = new yinch.CompassRose(this._gl);
+      this._ring = new yinch.Ring(this._gl, 20);
 
-      this._drawables.push(new yinch.Ring(this._gl, 20));
+      this._drawables.push(this._ring);
       this._drawables.push(new yinch.Board3d(this._gl));
       this._drawables.push(this._cr);
 
@@ -124,6 +125,9 @@ goog.provide('yinch.glBridge');
                                                   this._mvMatrix,
                                                   this._pMatrix,
                                                   this._zoomDist);
+      var gridCoords = yinch.glUtils.mvToGridCoords(coords[0], coords[1]);
+      console.log(gridCoords);
+      this._ring.setGridPos.apply(this._ring, gridCoords);
       this._lastX = e.offsetX;
       this._lastY = e.offsetY;
       this._mouseIsDown = true;

@@ -29,7 +29,7 @@ goog.provide('yinch.glUtils');
       for (j=0; j<arguments.length; j++) {
         if (k < arguments[j].length) {
           zipped[i] = arguments[j][k];
-          i++
+          i++;
         }
       }
 
@@ -57,7 +57,7 @@ goog.provide('yinch.glUtils');
     }
 
     return arr;
-  }
+  };
 
   yinch.glUtils.transformMat3VertArray = function(arr, m) {
     for (var i=0; i<arr.length; i++) {
@@ -65,7 +65,7 @@ goog.provide('yinch.glUtils');
     }
 
     return arr;
-  }
+  };
 
 
   yinch.glUtils.gridToMVCoords = function(maj, mn) {
@@ -117,5 +117,15 @@ goog.provide('yinch.glUtils');
     vec3.add(pos, pos, viewLine);
 
     return pos;
+  };
+
+  yinch.glUtils.mvToGridCoords = function(x, y) {
+    var minor = x / Math.cos(Math.PI / 6),
+      major = minor * Math.sin(Math.PI / 6) - y;
+
+    return [
+      Math.round(major + 5),
+      Math.round(minor + 5)
+    ];
   };
 })();
