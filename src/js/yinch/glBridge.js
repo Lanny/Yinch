@@ -75,6 +75,7 @@ goog.provide('yinch.glBridge');
 
     this._rotRate = Math.PI / 400;
     this._zoomRate = 1 / 100;
+    this._isRotating = false;
     this._rX = -1.0;
     this._rY = 0;
     this._rZ = 0;
@@ -116,29 +117,37 @@ goog.provide('yinch.glBridge');
                          this._onMouseMove.bind(this));
       goog.events.listen(this._canvas, goog.events.EventType.WHEEL,
                          this._onScroll.bind(this));
+
+      goog.events.listen(this._canvas, goog.events.EventType.CONTEXTMENU,
+                         function(e) { e.preventDefault(); });
     },
     _onMouseDown: function(e) {
-      var NDCX = (e.offsetX / this._gl.viewportWidth - 0.5) * 2,
-        NDCY = (0.5 - e.offsetY / this._gl.viewportHeight) * 2;
-
-      var coords = yinch.glUtils.screenToMVCoords(NDCX, NDCY,
-                                                  this._mvMatrix,
-                                                  this._pMatrix,
-                                                  this._zoomDist);
-      var gridCoords = yinch.glUtils.mvToGridCoords(coords[0], coords[1]);
-      console.log(gridCoords);
-      this._ring.setGridPos.apply(this._ring, gridCoords);
-      this._lastX = e.offsetX;
-      this._lastY = e.offsetY;
       this._mouseIsDown = true;
+
+      if (!!e.ctrlKey) {
+        this._isRotating = true;
+        this._lastX = e.offsetX;
+        this._lastY = e.offsetY;
+      } else {
+        var NDCX = (e.offsetX / this._gl.viewportWidth - 0.5) * 2,
+          NDCY = (0.5 - e.offsetY / this._gl.viewportHeight) * 2,
+          coords = yinch.glUtils.screenToMVCoords(
+            NDCX, NDCY, this._mvMatrix, this._pMatrix, this._zoomDist),
+          gridCoords = yinch.glUtils.mvToGridCoords(coords[0], coords[1]);
+      }
+
     },
     _onMouseUp: function(e) {
       this._mouseIsDown = false;
-      this._lastX = null; 
-      this._lastY = null; 
+
+      if (!!this._isRotating) {
+        this._isRotating = false;
+        this._lastX = null; 
+        this._lastY = null; 
+      }
     },
     _onMouseMove: function(e) {
-      if (this._mouseIsDown !== true) {
+      if (this._mouseIsDown !== true || this._isRotating !== true) {
         return;
       }
       var dx = this._lastX - e.offsetX,

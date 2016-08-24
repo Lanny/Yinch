@@ -369,8 +369,9 @@
   (dommy/listen! js/document :keydown
     (fn [e]
       (case (aget e "keyCode")
-        68 (print (game/urlize @game-state))
-        83 (print (game/game->script @game-state))
+        68 (print (game/urlize @game-state))             ;; d - dump
+        72 (print (:history @game-state))                ;; h - history
+        83 (print (game/game->script @game-state))       ;; s - script
         nil)))
 
   (dommy/listen! (:element canvas-data) :mousemove
