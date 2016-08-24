@@ -62,6 +62,9 @@ goog.provide('yinch.Ring');
 
     this._maj = 5;
     this._mn = 5;
+    this._posMatrix = mat4.create();
+    this._dropping = false;
+    this._dropRate = 1.0;
 
     this._init(gl);
 
@@ -108,20 +111,37 @@ goog.provide('yinch.Ring');
       });
 
     },
+    drop: function(height, rate) {
+      mat4.translate(this._posMatrix, this._posMatrix, [0, 0, height]);
+      this._dropping = true;
+      this._dropRate = rate || this._dropRate;
+    },
+    tick: function(delta) {
+      if (!!this._dropping) {
+        var dZ = 0 - delta / this._dropRate;
+        mat4.translate(this._posMatrix, this._posMatrix, [0, 0, dZ]);
+
+        if (this._posMatrix[14] <= 0.0) {
+          this._dropping = false;
+        }
+      }
+    },
     setGridPos: function(maj, mn) {
       this._maj = maj;
       this._mn = mn;
+
+      var transVec = yinch.glUtils.gridToMVCoords(maj, mn);
+      transVec.push(0.0);
+
+      mat4.identity(this._posMatrix);
+      mat4.translate(this._posMatrix, this._posMatrix, transVec);
     },
     draw: function(gl, shaderProgram, mvMatrix, pMatrix) {
-      var posMatrix = mat4.create(),
-        transVec = yinch.glUtils.gridToMVCoords(this._maj, this._mn);
-
-      transVec.push(0.0); // Add a 0 for the Z dim
-
-      mat4.translate(posMatrix, mvMatrix, transVec); 
+      var liveMatrix = mat4.create();
+      mat4.multiply(liveMatrix, mvMatrix, this._posMatrix);
 
       for (var i=0; i<this.geometry.length; i++) {
-        this.geometry[i].draw(gl, shaderProgram, posMatrix, pMatrix);
+        this.geometry[i].draw(gl, shaderProgram, liveMatrix, pMatrix);
       }
     }
   };

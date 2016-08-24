@@ -74,6 +74,7 @@ goog.provide('yinch.glBridge');
     this._mvMatrix = mat4.create();
     this._pMatrix = mat4.create();
     this._drawables = [];
+    this._tickables = [];
 
     this._rotRate = Math.PI / 400;
     this._zoomRate = 1 / 100;
@@ -171,7 +172,17 @@ goog.provide('yinch.glBridge');
       e.preventDefault();
     },
     _tick: function() {
+      var now = Date.now(),
+        delta = (now - this._lastTick) / 1000;
+
+      this._lastTick = now;
+
+      for (var i=0; i<this._tickables.length; i++) {
+        this._tickables[i].tick(delta);
+      } 
+
       this._drawScene();
+
       requestAnimationFrame(this._tick.bind(this));
     },
     _drawScene: function() {
@@ -195,6 +206,7 @@ goog.provide('yinch.glBridge');
 
     },
     start: function() {
+      this._lastTick = Date.now();
       this._tick();
     },
     offerState: function(state) {
@@ -229,7 +241,9 @@ goog.provide('yinch.glBridge');
       var ring = new yinch.Ring(this._gl, move.player, QUALITY);
 
       ring.setGridPos.apply(ring, move.position);
+      ring.drop(1.0, 1.0);
       this._drawables.push(ring);
+      this._tickables.push(ring);
     }
   };
 })();
