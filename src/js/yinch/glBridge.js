@@ -10,6 +10,8 @@ goog.require('yinch.CompassRose');
 goog.provide('yinch.glBridge');
 
 ;(function() {
+  var QUALITY = 20;
+
   function loadShader(gl, name, type) {
     if (!(type in gl)) {
       throw new Error('Unexpected shader type: ' + type);
@@ -94,9 +96,7 @@ goog.provide('yinch.glBridge');
       this._gl.enable(this._gl.DEPTH_TEST);
 
       this._cr = new yinch.CompassRose(this._gl);
-      this._ring = new yinch.Ring(this._gl, 20);
 
-      this._drawables.push(this._ring);
       this._drawables.push(new yinch.Board3d(this._gl));
       this._drawables.push(this._cr);
 
@@ -134,8 +134,11 @@ goog.provide('yinch.glBridge');
           coords = yinch.glUtils.screenToMVCoords(
             NDCX, NDCY, this._mvMatrix, this._pMatrix, this._zoomDist),
           gridCoords = yinch.glUtils.mvToGridCoords(coords[0], coords[1]);
-      }
 
+        if (this._state.phase === 'ring-placement') {
+          this._attemptRingPlace(gridCoords);
+        }
+      }
     },
     _onMouseUp: function(e) {
       this._mouseIsDown = false;
@@ -195,11 +198,38 @@ goog.provide('yinch.glBridge');
       this._tick();
     },
     offerState: function(state) {
+      this._state = state;
     },
     offerStatus: function(status) {
+      if (status.status !== 'success') {
+        return;
+      }
+
+      if (status.history.length) {
+        var lastEntry = status.history[status.history.length - 1];
+
+        if (lastEntry.action === 'place-ring') {
+          this._placeRing(lastEntry);
+        } else {
+          throw Error('Unexpected last action: ' + lastEntry.action);
+        }
+      }
+
     },
     registerInteractionCallback: function(cb) {
       this._interactionCallback = cb;
+    },
+    _attemptRingPlace: function(gridCoords) {
+      this._interactionCallback({
+        'type': 'grid-click',
+        'click-info': [this._state.turn, gridCoords[0], gridCoords[1]]
+      });
+    },
+    _placeRing: function(move) {
+      var ring = new yinch.Ring(this._gl, move.player, QUALITY);
+
+      ring.setGridPos.apply(ring, move.position);
+      this._drawables.push(ring);
     }
   };
 })();

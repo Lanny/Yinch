@@ -54,7 +54,7 @@ goog.provide('yinch.Geometry');
 
       this.setVertexColorBuffer(buffer);
     }
-  }
+  };
 
   yinch.Geometry = Geometry;
 })();

@@ -55,9 +55,10 @@ goog.provide('yinch.Ring');
   }
 
 
-  function Ring(gl, segments) {
-    this.segments = segments;
+  function Ring(gl, player, segments) {
+    this.segments = segments || 20;
     this.geometry = [];
+    this.player = player;
 
     this._maj = 5;
     this._mn = 5;
@@ -98,7 +99,14 @@ goog.provide('yinch.Ring');
 
       this.geometry.push(new yinch.Geometry(gl, vs));
 
-      vs = [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0];
+      colorVec = (this.player === 'white') ?
+          [1.0, 1.0, 1.0, 1.0] :
+          [0.0, 0.0, 0.0, 1.0];
+
+      this.geometry.map(function(geo) {
+        geo.setSolidColor(gl, colorVec);
+      });
+
     },
     setGridPos: function(maj, mn) {
       this._maj = maj;

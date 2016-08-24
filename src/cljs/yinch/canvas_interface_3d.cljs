@@ -11,7 +11,7 @@
   (let [state-chan (async/chan)]
     (go
       (loop [new-state (async/<! state-chan)]
-        (.offerState view new-state)
+        (.offerState view (clj->js new-state))
         (recur (async/<! state-chan))))
     state-chan))
 
@@ -20,7 +20,9 @@
   (let [status-chan (async/chan)]
     (go
       (loop [status (async/<! status-chan)]
-        (.offerStatus view status)
+        (->> status
+             clj->js
+             (.offerStatus view))
         (recur (async/<! status-chan))))
     status-chan))
 
@@ -29,6 +31,9 @@
   (let [interaction-chan (async/chan)
         cb #(as-> % interaction
                  (js->clj interaction :keywordize-keys true)
+                 (update-in interaction [:type] keyword)
+                 (update-in interaction [:click-info 0] keyword)
+                 ((fn [x] (println x) x) interaction)
                  (async/put! interaction-chan interaction))]
     (.registerInteractionCallback view cb)
     interaction-chan))
