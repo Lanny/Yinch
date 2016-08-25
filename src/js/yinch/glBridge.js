@@ -4,6 +4,7 @@ goog.require('goog.math');
 goog.require('yinch.shaders');
 goog.require('yinch.glUtils');
 goog.require('yinch.Board3d');
+goog.require('yinch.AccTransAnimation');
 goog.require('yinch.Ring');
 goog.require('yinch.CompassRose');
 
@@ -241,9 +242,8 @@ goog.provide('yinch.glBridge');
       var ring = new yinch.Ring(this._gl, move.player, QUALITY);
 
       ring.setGridPos.apply(ring, move.position);
-      ring.drop(1.0, 1.0);
       this._drawables.push(ring);
-      this._tickables.push(ring);
+      this._tickables.push(ring.drop());
     }
   };
 })();

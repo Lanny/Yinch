@@ -1,5 +1,7 @@
 goog.require('yinch.glUtils');
 goog.require('yinch.Geometry');
+goog.require('yinch.AccTransAnimation');
+
 goog.provide('yinch.Ring');
 
 ;(function() {
@@ -113,8 +115,11 @@ goog.provide('yinch.Ring');
     },
     drop: function(height, rate) {
       mat4.translate(this._posMatrix, this._posMatrix, [0, 0, height]);
-      this._dropping = true;
-      this._dropRate = rate || this._dropRate;
+
+      var anim = new yinch.AccTransAnimation(this._posMatrix, [0,0,-height], 1.0);
+      anim.start();
+
+      return anim;
     },
     tick: function(delta) {
       if (!!this._dropping) {
