@@ -22,19 +22,24 @@ goog.provide('yinch.AccTransAnimation');
       this._running = false;
     },
     tick: function(delta) {
+      if (!this._running) {
+        return false;
+      }
+
+      this._elapsedTime += delta;
+      console.log(this._elapsedTime);
       var p = (this._accRate * this._elapsedTime * this._elapsedTime) / 2;
 
-      if (this._p >= 1.0) {
+      if (p >= 1.0) {
         this._running = false;
 
         mat4.translate(this._mat, this._origMat, this._transVec);
 
         return false;
       } else {
-        console.log(p);
         var tweenVec = vec3.create();
         vec3.scale(tweenVec, this._transVec, p);
-        mat4.translate(this._mat, this._origMat, this._transVec);
+        mat4.translate(this._mat, this._origMat, tweenVec);
       }
     }
   };

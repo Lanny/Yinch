@@ -113,23 +113,15 @@ goog.provide('yinch.Ring');
       });
 
     },
-    drop: function(height, rate) {
+    drop: function(height) {
+      height = height || 1.0;
+
       mat4.translate(this._posMatrix, this._posMatrix, [0, 0, height]);
 
-      var anim = new yinch.AccTransAnimation(this._posMatrix, [0,0,-height], 1.0);
+      var anim = new yinch.AccTransAnimation(this._posMatrix, [0,0,0-height], 1.0);
       anim.start();
 
       return anim;
-    },
-    tick: function(delta) {
-      if (!!this._dropping) {
-        var dZ = 0 - delta / this._dropRate;
-        mat4.translate(this._posMatrix, this._posMatrix, [0, 0, dZ]);
-
-        if (this._posMatrix[14] <= 0.0) {
-          this._dropping = false;
-        }
-      }
     },
     setGridPos: function(maj, mn) {
       this._maj = maj;

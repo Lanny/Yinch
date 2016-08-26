@@ -4,6 +4,8 @@
   :license {:name "GNU General Public License, version 2"
             :url "https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt"}
   :dependencies [[org.clojure/clojure "1.7.0"]
+                 ;; NB: This is a local snapshot so I can get srcmaps on js
+                 ;; files. Replace with v. "1.8.34" if you're not me.
                  [org.clojure/clojurescript "0.0-SNAPSHOT"
                                     :exclusions [org.apache.ant/ant]]
                  [org.clojure/core.async "0.2.374"]
