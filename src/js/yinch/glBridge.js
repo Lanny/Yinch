@@ -139,6 +139,8 @@ goog.provide('yinch.glBridge');
 
         if (this._state.phase === 'ring-placement') {
           this._attemptRingPlace(gridCoords);
+        } else if (this._state.phase === 'ring-pick') {
+          this._startRingMove(gridCoords);
         }
       }
     },
@@ -152,9 +154,15 @@ goog.provide('yinch.glBridge');
       }
     },
     _onMouseMove: function(e) {
-      if (this._mouseIsDown !== true || this._isRotating !== true) {
+      if (this._mouseIsDown !== true) {
         return;
+      } else if (this._isRotating === true) {
+        this._onRotateMovementEvent(e);
+      } else if (this._dragging === true) {
+        this._onDragMovementEvent(e);
       }
+    },
+    _onRotateMovementEvent: function(e) {
       var dx = this._lastX - e.offsetX,
         dy = this._lastY - e.offsetY;
 
@@ -163,6 +171,14 @@ goog.provide('yinch.glBridge');
 
       this._rZ += dx * this._rotRate;
       this._rX -= dy * this._rotRate;
+    },
+    _onDragMovementEvent: function(e) {
+        var NDCX = (e.offsetX / this._gl.viewportWidth - 0.5) * 2,
+          NDCY = (0.5 - e.offsetY / this._gl.viewportHeight) * 2,
+          coords = yinch.glUtils.screenToMVCoords(
+            NDCX, NDCY, this._mvMatrix, this._pMatrix, this._zoomDist);
+
+      this._dragTarget.notifyOfDrag(coords);
     },
     _onScroll: function(e) {
       this._zoomDist = goog.math.clamp(
@@ -211,6 +227,24 @@ goog.provide('yinch.glBridge');
       }
 
     },
+    _findPieceAtGridCoords: function(gridCoords) {
+      var piecesAtPos = this._drawables.filter(function(drawable) {
+        if (typeof drawable.getPos !== 'function') {
+          return false;
+        }
+
+        return (drawable.getPos()[0] === gridCoords[0] &&
+                drawable.getPos()[1] === gridCoords[1]);
+      });
+
+      if (piecesAtPos > 1) {
+        throw new Error('Multiple pieces found at the same position');
+      } else if (piecesAtPos.length < 1) {
+        return null;
+      } else {
+        return piecesAtPos[0];
+      }
+    },
     start: function() {
       this._lastTick = Date.now();
       this._tick();
@@ -248,7 +282,19 @@ goog.provide('yinch.glBridge');
 
       ring.setGridPos.apply(ring, move.position);
       this._drawables.push(ring);
-      this._tickables.push(ring.drop(2.0));
+
+      var animation = ring.drop(2.0);
+      this._tickables.push(animation);
+    },
+    _startRingMove: function(gridCoords) {
+      var ring = this._findPieceAtGridCoords(gridCoords);
+
+      if (!(ringMaybe instanceof yinch.Ring)) {
+        return;
+      }
+
+      this._dragging = true;
+      this._dragTarget = ring;
     }
   };
 })();

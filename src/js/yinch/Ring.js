@@ -139,6 +139,10 @@ goog.provide('yinch.Ring');
       for (var i=0; i<this.geometry.length; i++) {
         this.geometry[i].draw(gl, shaderProgram, liveMatrix, pMatrix);
       }
+    },
+    notifyOfDrag: function(boardPlaneCoords) {
+      //mat4.identity(this._posMatrix);
+      //mat4.translate(this._posMatrix, this._posMatrix, boardPlaneCoords);
     }
   };
 
