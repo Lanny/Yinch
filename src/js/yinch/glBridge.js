@@ -179,7 +179,12 @@ goog.provide('yinch.glBridge');
       this._lastTick = now;
 
       for (var i=0; i<this._tickables.length; i++) {
-        this._tickables[i].tick(delta);
+        var keepTicking = this._tickables[i].tick(delta);
+
+        if (keepTicking === false) {
+          this._tickables.splice(i, 1);
+          i--;
+        }
       } 
 
       this._drawScene();
@@ -243,7 +248,7 @@ goog.provide('yinch.glBridge');
 
       ring.setGridPos.apply(ring, move.position);
       this._drawables.push(ring);
-      this._tickables.push(ring.drop());
+      this._tickables.push(ring.drop(2.0));
     }
   };
 })();

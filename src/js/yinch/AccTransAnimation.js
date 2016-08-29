@@ -11,7 +11,7 @@ goog.provide('yinch.AccTransAnimation');
     this._running = false;
     this._elapsedTime = 0.0;
     this._duration = duration;
-    this._accRate = (duration * duration) / (2 * vec3.length(transVec));
+    this._accRate =  (vec3.length(transVec)) / (duration * duration);
   }
 
   AccTransAnimation.prototype = {
@@ -27,7 +27,6 @@ goog.provide('yinch.AccTransAnimation');
       }
 
       this._elapsedTime += delta;
-      console.log(this._elapsedTime);
       var p = (this._accRate * this._elapsedTime * this._elapsedTime) / 2;
 
       if (p >= 1.0) {

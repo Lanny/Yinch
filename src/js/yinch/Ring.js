@@ -111,14 +111,13 @@ goog.provide('yinch.Ring');
       this.geometry.map(function(geo) {
         geo.setSolidColor(gl, colorVec);
       });
-
     },
     drop: function(height) {
       height = height || 1.0;
 
       mat4.translate(this._posMatrix, this._posMatrix, [0, 0, height]);
 
-      var anim = new yinch.AccTransAnimation(this._posMatrix, [0,0,0-height], 1.0);
+      var anim = new yinch.AccTransAnimation(this._posMatrix, [0,0,0-height], 0.2);
       anim.start();
 
       return anim;
