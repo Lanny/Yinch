@@ -69,8 +69,6 @@ goog.provide('yinch.Ring');
     this._dropRate = 1.0;
 
     this._init(gl);
-
-    gr = this;
   }
 
   Ring.prototype = {

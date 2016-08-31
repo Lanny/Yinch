@@ -76,6 +76,7 @@ goog.provide('yinch.glBridge');
     this._pMatrix = mat4.create();
     this._drawables = [];
     this._tickables = [];
+    this._state = null;
 
     this._rotRate = Math.PI / 400;
     this._zoomRate = 1 / 100;
@@ -122,6 +123,24 @@ goog.provide('yinch.glBridge');
 
       goog.events.listen(this._canvas, goog.events.EventType.CONTEXTMENU,
                          function(e) { e.preventDefault(); });
+    },
+    _loadInitialBoardState: function(state) {
+      var board = state.board;
+
+      for (var maj=0; maj<board.length; maj++) {
+        for (var mn=0; mn<board[maj].length; mn++) {
+          var cell = board[maj][mn];
+
+          if (cell === null) continue;
+
+          if (cell.type === 'ring') {
+            var ring = new yinch.Ring(this._gl, cell.color);
+            ring.setGridPos(maj, mn);
+
+            this._drawables.push(ring);
+          }
+        }
+      }
     },
     _onMouseDown: function(e) {
       this._mouseIsDown = true;
@@ -250,6 +269,10 @@ goog.provide('yinch.glBridge');
       this._tick();
     },
     offerState: function(state) {
+      if (this._state === null) {
+        this._loadInitialBoardState(state);
+      }
+
       this._state = state;
     },
     offerStatus: function(status) {

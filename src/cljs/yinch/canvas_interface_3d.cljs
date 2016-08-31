@@ -33,7 +33,6 @@
                  (js->clj interaction :keywordize-keys true)
                  (update-in interaction [:type] keyword)
                  (update-in interaction [:click-info 0] keyword)
-                 ((fn [x] (println x) x) interaction)
                  (async/put! interaction-chan interaction))]
     (.registerInteractionCallback view cb)
     interaction-chan))
