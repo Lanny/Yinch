@@ -1,6 +1,9 @@
+goog.require('goog.inherits');
+
 goog.require('yinch.glUtils');
 goog.require('yinch.Geometry');
 goog.require('yinch.AccTransAnimation');
+goog.require('yinch.Draggable');
 
 goog.provide('yinch.Ring');
 
@@ -58,6 +61,8 @@ goog.provide('yinch.Ring');
 
 
   function Ring(gl, player, segments) {
+    yinch.Draggable.call(this);
+
     this.segments = segments || 20;
     this.geometry = [];
     this.player = player;
@@ -71,78 +76,81 @@ goog.provide('yinch.Ring');
     this._init(gl);
   }
 
-  Ring.prototype = {
-    _init: function(gl) {
-      var vs;
+  goog.inherits(Ring, yinch.Draggable);
 
-      // Top plate
-      vs = makePlate(this.segments, INNER_RADIUS, OUTER_RADIUS);
-      yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS]);
-      vs = yinch.glUtils.flatten(vs);
+  Ring.prototype._init = function(gl) {
+    var vs;
 
-      this.geometry.push(new yinch.Geometry(gl, vs));
+    // Top plate
+    vs = makePlate(this.segments, INNER_RADIUS, OUTER_RADIUS);
+    yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS]);
+    vs = yinch.glUtils.flatten(vs);
 
-      // Bottom plate
-      vs = makePlate(this.segments, INNER_RADIUS, OUTER_RADIUS);
-      vs = yinch.glUtils.flatten(vs);
+    this.geometry.push(new yinch.Geometry(gl, vs));
 
-      this.geometry.push(new yinch.Geometry(gl, vs));
+    // Bottom plate
+    vs = makePlate(this.segments, INNER_RADIUS, OUTER_RADIUS);
+    vs = yinch.glUtils.flatten(vs);
 
-      // Inner band
-      vs = makeBand(this.segments, INNER_RADIUS, THICKNESS);
-      yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS/2]);
-      vs = yinch.glUtils.flatten(vs);
+    this.geometry.push(new yinch.Geometry(gl, vs));
 
-      this.geometry.push(new yinch.Geometry(gl, vs));
+    // Inner band
+    vs = makeBand(this.segments, INNER_RADIUS, THICKNESS);
+    yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS/2]);
+    vs = yinch.glUtils.flatten(vs);
 
-      // Outer band
-      vs = makeBand(this.segments, OUTER_RADIUS, THICKNESS);
-      yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS/2]);
-      vs = yinch.glUtils.flatten(vs);
+    this.geometry.push(new yinch.Geometry(gl, vs));
 
-      this.geometry.push(new yinch.Geometry(gl, vs));
+    // Outer band
+    vs = makeBand(this.segments, OUTER_RADIUS, THICKNESS);
+    yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS/2]);
+    vs = yinch.glUtils.flatten(vs);
 
-      colorVec = (this.player === 'white') ?
-          [1.0, 1.0, 1.0, 1.0] :
-          [0.0, 0.0, 0.0, 1.0];
+    this.geometry.push(new yinch.Geometry(gl, vs));
 
-      this.geometry.map(function(geo) {
-        geo.setSolidColor(gl, colorVec);
-      });
-    },
-    drop: function(height) {
-      height = height || 1.0;
+    colorVec = (this.player === 'white') ?
+        [1.0, 1.0, 1.0, 1.0] :
+        [0.0, 0.0, 0.0, 1.0];
 
-      mat4.translate(this._posMatrix, this._posMatrix, [0, 0, height]);
-
-      var anim = new yinch.AccTransAnimation(this._posMatrix, [0,0,0-height], 0.2);
-      anim.start();
-
-      return anim;
-    },
-    setGridPos: function(maj, mn) {
-      this._maj = maj;
-      this._mn = mn;
-
-      var transVec = yinch.glUtils.gridToMVCoords(maj, mn);
-      transVec.push(0.0);
-
-      mat4.identity(this._posMatrix);
-      mat4.translate(this._posMatrix, this._posMatrix, transVec);
-    },
-    draw: function(gl, shaderProgram, mvMatrix, pMatrix) {
-      var liveMatrix = mat4.create();
-      mat4.multiply(liveMatrix, mvMatrix, this._posMatrix);
-
-      for (var i=0; i<this.geometry.length; i++) {
-        this.geometry[i].draw(gl, shaderProgram, liveMatrix, pMatrix);
-      }
-    },
-    notifyOfDrag: function(boardPlaneCoords) {
-      //mat4.identity(this._posMatrix);
-      //mat4.translate(this._posMatrix, this._posMatrix, boardPlaneCoords);
-    }
+    this.geometry.map(function(geo) {
+      geo.setSolidColor(gl, colorVec);
+    });
   };
 
+  Ring.prototype.drop = function(height) {
+    height = height || 1.0;
+
+    mat4.translate(this._posMatrix, this._posMatrix, [0, 0, height]);
+
+    var anim = new yinch.AccTransAnimation(this._posMatrix, [0,0,0-height], 0.2);
+    anim.start();
+
+    return anim;
+  };
+  
+  Ring.prototype.setGridPos = function(maj, mn) {
+    this._maj = maj;
+    this._mn = mn;
+
+    var transVec = yinch.glUtils.gridToMVCoords(maj, mn);
+    transVec.push(0.0);
+
+    mat4.identity(this._posMatrix);
+    mat4.translate(this._posMatrix, this._posMatrix, transVec);
+  };
+  
+  Ring.prototype.getGridPos = function() {
+    return [this._maj, this._mn];
+  };
+  
+  Ring.prototype.draw = function(gl, shaderProgram, mvMatrix, pMatrix) {
+    var liveMatrix = mat4.create();
+    mat4.multiply(liveMatrix, mvMatrix, this._posMatrix);
+
+    for (var i=0; i<this.geometry.length; i++) {
+      this.geometry[i].draw(gl, shaderProgram, liveMatrix, pMatrix);
+    }
+  };
+  
   yinch.Ring = Ring;
 })();
