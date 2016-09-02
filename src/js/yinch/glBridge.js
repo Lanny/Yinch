@@ -5,6 +5,7 @@ goog.require('yinch.shaders');
 goog.require('yinch.glUtils');
 goog.require('yinch.Board3d');
 goog.require('yinch.AccTransAnimation');
+goog.require('yinch.Draggable');
 goog.require('yinch.Ring');
 goog.require('yinch.CompassRose');
 
@@ -142,6 +143,14 @@ goog.provide('yinch.glBridge');
         }
       }
     },
+    _calculateBoardPlanePositionOfMouseEvent: function(e) {
+      var NDCX = (e.offsetX / this._gl.viewportWidth - 0.5) * 2,
+        NDCY = (0.5 - e.offsetY / this._gl.viewportHeight) * 2,
+        coords = yinch.glUtils.screenToMVCoords(
+          NDCX, NDCY, this._mvMatrix, this._pMatrix, this._zoomDist);
+
+      return coords;
+    },
     _onMouseDown: function(e) {
       this._mouseIsDown = true;
 
@@ -150,10 +159,7 @@ goog.provide('yinch.glBridge');
         this._lastX = e.offsetX;
         this._lastY = e.offsetY;
       } else {
-        var NDCX = (e.offsetX / this._gl.viewportWidth - 0.5) * 2,
-          NDCY = (0.5 - e.offsetY / this._gl.viewportHeight) * 2,
-          coords = yinch.glUtils.screenToMVCoords(
-            NDCX, NDCY, this._mvMatrix, this._pMatrix, this._zoomDist),
+        var coords = this._calculateBoardPlanePositionOfMouseEvent(e),
           gridCoords = yinch.glUtils.mvToGridCoords(coords[0], coords[1]);
 
         if (this._state.phase === 'ring-placement') {
@@ -170,6 +176,13 @@ goog.provide('yinch.glBridge');
         this._isRotating = false;
         this._lastX = null; 
         this._lastY = null; 
+      } else if (!!this._dragging) {
+        var coords = this._calculateBoardPlanePositionOfMouseEvent(e);
+
+        this._dragTarget.dragEnd(coords);
+
+        this._dragTarget = null;
+        this._dragging = false;
       }
     },
     _onMouseMove: function(e) {
@@ -192,12 +205,8 @@ goog.provide('yinch.glBridge');
       this._rX -= dy * this._rotRate;
     },
     _onDragMovementEvent: function(e) {
-        var NDCX = (e.offsetX / this._gl.viewportWidth - 0.5) * 2,
-          NDCY = (0.5 - e.offsetY / this._gl.viewportHeight) * 2,
-          coords = yinch.glUtils.screenToMVCoords(
-            NDCX, NDCY, this._mvMatrix, this._pMatrix, this._zoomDist);
-
-      this._dragTarget.notifyOfDrag(coords);
+      var coords = this._calculateBoardPlanePositionOfMouseEvent(e);
+      this._dragTarget.dragMotion(coords);
     },
     _onScroll: function(e) {
       this._zoomDist = goog.math.clamp(
@@ -312,14 +321,12 @@ goog.provide('yinch.glBridge');
     _startRingMove: function(gridCoords) {
       var piece = this._findPieceAtGridCoords(gridCoords);
 
-      if (!(piece instanceof yinch.Ring)) {
-        console.log('OUT!', piece);
+      if (!(piece instanceof yinch.Draggable)) {
         return;
       }
-      console.log('IN!');
-
       this._dragging = true;
       this._dragTarget = piece;
+      this._dragTarget.dragStart();
     }
   };
 })();

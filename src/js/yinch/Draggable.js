@@ -5,10 +5,17 @@ goog.provide('yinch.Draggable');
 ;(function() {
   function Draggable(positionMatrixName) {
     this._posMatrixName = positionMatrixName || '_posMatrix';
+    this._initialMatrix = null;
   }
 
   Draggable.prototype = {
-    notifyOfDrag: function(boardPlaneCoords) {
+    dragStart: function() {
+      this._initialMatrix = mat4.clone(this[this._posMatrixName]);
+    },
+    dragEnd: function() {
+      mat4.copy(this[this._posMatrixName], this._initialMatrix);
+    },
+    dragMotion: function(boardPlaneCoords) {
       var posMatrix = this[this._posMatrixName];
 
       mat4.identity(posMatrix);
