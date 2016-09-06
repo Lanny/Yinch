@@ -1,7 +1,9 @@
 goog.require('goog.events');
 goog.require('goog.math');
+goog.require('goog.Promise');
 
 goog.require('yinch.shaders');
+goog.require('yinch.game');
 goog.require('yinch.glUtils');
 goog.require('yinch.Board3d');
 goog.require('yinch.AccTransAnimation');
@@ -77,6 +79,7 @@ goog.provide('yinch.glBridge');
     this._pMatrix = mat4.create();
     this._drawables = [];
     this._tickables = [];
+    this._statusQueue = [];
     this._state = null;
 
     this._rotRate = Math.PI / 400;
@@ -119,6 +122,8 @@ goog.provide('yinch.glBridge');
                          this._onMouseUp.bind(this));
       goog.events.listen(this._canvas, goog.events.EventType.MOUSEMOVE,
                          this._onMouseMove.bind(this));
+      goog.events.listen(this._canvas, goog.events.EventType.KEYDOWN,
+                         this._onKeyDown.bind(this));
       goog.events.listen(this._canvas, goog.events.EventType.WHEEL,
                          this._onScroll.bind(this));
 
@@ -177,9 +182,16 @@ goog.provide('yinch.glBridge');
         this._lastX = null; 
         this._lastY = null; 
       } else if (!!this._dragging) {
-        var coords = this._calculateBoardPlanePositionOfMouseEvent(e);
+        var ring = this._dragTarget,
+          coords = this._calculateBoardPlanePositionOfMouseEvent(e),
+          gridCoords = yinch.glUtils.mvToGridCoords(coords[0], coords[1]);
 
-        this._dragTarget.dragEnd(coords);
+        this._attemptRingDrop(ring, ring.getGridPos(), gridCoords)
+          .then(function(result) {
+            ring.dragEnd(coords);
+          }, function(result) {
+            ring.dragEnd(coords);
+          });
 
         this._dragTarget = null;
         this._dragging = false;
@@ -192,6 +204,11 @@ goog.provide('yinch.glBridge');
         this._onRotateMovementEvent(e);
       } else if (this._dragging === true) {
         this._onDragMovementEvent(e);
+      }
+    },
+    _onKeyDown: function(e) {
+      if (e.keyCode === 68) {
+        console.log(yinch.game.urlize(this._state))
       }
     },
     _onRotateMovementEvent: function(e) {
@@ -285,11 +302,17 @@ goog.provide('yinch.glBridge');
       this._state = state;
     },
     offerStatus: function(status) {
+      var statusCallback = this._statusQueue.shift();
+
+      if (statusCallback !== undefined) {
+        statusCallback(status);
+      }
+
       if (status.status !== 'success') {
         return;
       }
 
-      if (status.history.length) {
+      if (status.history && status.history.length) {
         var lastEntry = status.history[status.history.length - 1];
 
         if (lastEntry.action === 'place-ring') {
@@ -303,11 +326,55 @@ goog.provide('yinch.glBridge');
     registerInteractionCallback: function(cb) {
       this._interactionCallback = cb;
     },
+    _submitInteraction: function(interaction) {
+      var self = this;
+
+      var promise = new goog.Promise(function(resolve, reject) {
+        self._statusQueue.push(function(status) {
+          if (status.status === 'success') {
+            resolve(status);
+          } else {
+            reject(status);
+          }
+        });
+
+        self._interactionCallback(interaction);
+      });
+
+      return promise;
+    },
     _attemptRingPlace: function(gridCoords) {
-      this._interactionCallback({
+      this._submitInteraction({
         'type': 'grid-click',
         'click-info': [this._state.turn, gridCoords[0], gridCoords[1]]
       });
+    },
+    _attemptRingDrop: function(ring, initialCoords, finalCoords) {
+      var self = this,
+        pickInteraction = {
+          'type': 'grid-click',
+          'click-info': [this._state.turn, initialCoords[0], initialCoords[1]]
+        }, 
+        placeInteraction = {
+          'type': 'grid-click',
+          'click-info': [this._state.turn, finalCoords[0], finalCoords[1]]
+        };
+      
+      var promise = new goog.Promise(function(resolve, reject) {
+        self._submitInteraction(pickInteraction)
+          .then(function() {
+            self._submitInteraction(placeInteraction)
+              .then(function() {
+                resolve();
+              }, function() {
+                reject()
+              });
+          }, function() {
+            reject();
+          });
+      });
+
+      return promise;
     },
     _placeRing: function(move) {
       var ring = new yinch.Ring(this._gl, move.player, QUALITY);
