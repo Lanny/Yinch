@@ -188,9 +188,9 @@ goog.provide('yinch.glBridge');
 
         this._attemptRingDrop(ring, ring.getGridPos(), gridCoords)
           .then(function(result) {
-            ring.dragEnd(coords);
+            ring.dragEnd(coords, false);
           }, function(result) {
-            ring.dragEnd(coords);
+            ring.dragEnd(coords, true);
           });
 
         this._dragTarget = null;
@@ -297,6 +297,26 @@ goog.provide('yinch.glBridge');
     offerState: function(state) {
       if (this._state === null) {
         this._loadInitialBoardState(state);
+        this._state = state;
+
+        this._state.history = this._state.history || [];
+        return;
+      }
+
+      if (this._state.history.length === state.history.length) {
+        return;
+      } else if (this._state.history.length + 1 === state.history.length) {
+        var lastEntry = state.history[0];
+
+        if (lastEntry.action === 'place-ring') {
+          this._placeRing(lastEntry);
+        } else if (lastEntry.action === 'ring-move') {
+          this._moveRing(lastEntry);
+        } else {
+          throw Error('Unexpected last action: ' + lastEntry.action);
+        }
+      } else {
+        throw Error('Unexpected state sequence received!');
       }
 
       this._state = state;
@@ -312,15 +332,6 @@ goog.provide('yinch.glBridge');
         return;
       }
 
-      if (status.history && status.history.length) {
-        var lastEntry = status.history[status.history.length - 1];
-
-        if (lastEntry.action === 'place-ring') {
-          this._placeRing(lastEntry);
-        } else {
-          throw Error('Unexpected last action: ' + lastEntry.action);
-        }
-      }
 
     },
     registerInteractionCallback: function(cb) {
@@ -384,6 +395,10 @@ goog.provide('yinch.glBridge');
 
       var animation = ring.drop(2.0);
       this._tickables.push(animation);
+    },
+    _moveRing: function(move) {
+      var ring = this._findPieceAtGridCoords(move.start);
+      ring.setGridPos(move.stop[0], move.stop[1]);
     },
     _startRingMove: function(gridCoords) {
       var piece = this._findPieceAtGridCoords(gridCoords);

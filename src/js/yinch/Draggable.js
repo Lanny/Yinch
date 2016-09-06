@@ -12,8 +12,12 @@ goog.provide('yinch.Draggable');
     dragStart: function() {
       this._initialMatrix = mat4.clone(this[this._posMatrixName]);
     },
-    dragEnd: function() {
-      mat4.copy(this[this._posMatrixName], this._initialMatrix);
+    dragEnd: function(finalCoord, reset) {
+      reset = reset || (reset === undefined) ? true : false;
+
+      if (reset) {
+        mat4.copy(this[this._posMatrixName], this._initialMatrix);
+      }
     },
     dragMotion: function(boardPlaneCoords) {
       var posMatrix = this[this._posMatrixName];
