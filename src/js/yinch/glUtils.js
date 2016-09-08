@@ -129,8 +129,6 @@ goog.provide('yinch.glUtils');
     ];
   };
 
-
-
   yinch.glUtils.makeCircle = function(segments, radius) {
     radius = radius || 1.0;
 
@@ -145,6 +143,24 @@ goog.provide('yinch.glUtils');
     return vertices;
   }
 
+  yinch.glUtils.makePlate = function(segments, radius) {
+    var circVerts = this.makeCircle(segments, radius),
+      verts = new Array(segments-1),
+      head = 0,
+      tail = segments-1,
+      i = 0;
+
+    while (head <= tail) {
+      verts[i++] = circVerts[head++];
+
+      if (head > tail) break;
+
+      verts[i++] = circVerts[tail--];
+    }
+
+    return verts;
+  };
+
   yinch.glUtils.makeFlatRing = function(segments, innerRadius, outerRadius) {
     var innerVerts = yinch.glUtils.makeCircle(segments, innerRadius),
       outerVerts = yinch.glUtils.makeCircle(segments, outerRadius),
@@ -155,7 +171,7 @@ goog.provide('yinch.glUtils');
       vec3.clone(combinedVerts[1]));
 
     return combinedVerts;
-  }
+  };
 
   yinch.glUtils.makeBand = function(segments, radius, width) {
     var topVerts = yinch.glUtils.makeCircle(segments, radius),
@@ -173,5 +189,5 @@ goog.provide('yinch.glUtils');
                        vec3.clone(combinedVerts[1]));
 
     return combinedVerts;
-  }
+  };
 })();
