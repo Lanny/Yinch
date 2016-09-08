@@ -128,4 +128,50 @@ goog.provide('yinch.glUtils');
       Math.round(minor + 5)
     ];
   };
+
+
+
+  yinch.glUtils.makeCircle = function(segments, radius) {
+    radius = radius || 1.0;
+
+    var vertices = new Array(segments),
+      radsPerSegment = (Math.PI * 2) / segments;
+
+    for (var i=0; i<segments; i++) {
+      t = radsPerSegment * i;
+      vertices[i] = [Math.cos(t) * radius, Math.sin(t) * radius, 0];
+    }
+
+    return vertices;
+  }
+
+  yinch.glUtils.makePlate = function(segments, innerRadius, outerRadius) {
+    var innerVerts = yinch.glUtils.makeCircle(segments, innerRadius),
+      outerVerts = yinch.glUtils.makeCircle(segments, outerRadius),
+      combinedVerts = yinch.glUtils.zip(innerVerts, outerVerts);
+
+    combinedVerts.push(
+      vec3.clone(combinedVerts[0]),
+      vec3.clone(combinedVerts[1]));
+
+    return combinedVerts;
+  }
+
+  yinch.glUtils.makeBand = function(segments, radius, width) {
+    var topVerts = yinch.glUtils.makeCircle(segments, radius),
+      bottomVerts = yinch.glUtils.makeCircle(segments, radius),
+      halfWidth = width / 2,
+      combinedVerts;
+
+    for (var i=0; i<topVerts.length; i++) {
+      topVerts[i][2] += halfWidth;
+      bottomVerts[i][2] -= halfWidth;
+    }
+
+    combinedVerts = yinch.glUtils.zip(topVerts, bottomVerts);
+    combinedVerts.push(vec3.clone(combinedVerts[0]),
+                       vec3.clone(combinedVerts[1]));
+
+    return combinedVerts;
+  }
 })();
