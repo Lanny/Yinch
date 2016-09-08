@@ -6,9 +6,9 @@ goog.require('yinch.shaders');
 goog.require('yinch.game');
 goog.require('yinch.glUtils');
 goog.require('yinch.Board3d');
-goog.require('yinch.AccTransAnimation');
 goog.require('yinch.Draggable');
 goog.require('yinch.Ring');
+goog.require('yinch.Tile');
 goog.require('yinch.CompassRose');
 
 goog.provide('yinch.glBridge');
@@ -106,6 +106,9 @@ goog.provide('yinch.glBridge');
 
       this._drawables.push(new yinch.Board3d(this._gl));
       this._drawables.push(this._cr);
+
+      gt = new yinch.Tile(this._gl, 'white');
+      this._drawables.push(gt);
 
       this._bindHandlers();
 
