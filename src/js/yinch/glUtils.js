@@ -145,7 +145,7 @@ goog.provide('yinch.glUtils');
     return vertices;
   }
 
-  yinch.glUtils.makePlate = function(segments, innerRadius, outerRadius) {
+  yinch.glUtils.makeFlatRing = function(segments, innerRadius, outerRadius) {
     var innerVerts = yinch.glUtils.makeCircle(segments, innerRadius),
       outerVerts = yinch.glUtils.makeCircle(segments, outerRadius),
       combinedVerts = yinch.glUtils.zip(innerVerts, outerVerts);

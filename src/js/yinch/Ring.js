@@ -3,7 +3,6 @@ goog.require('goog.mixin');
 
 goog.require('yinch.glUtils');
 goog.require('yinch.Geometry');
-goog.require('yinch.AccTransAnimation');
 goog.require('yinch.Draggable');
 goog.require('yinch.ComplexGeometry');
 
@@ -29,15 +28,15 @@ goog.provide('yinch.Ring');
   Ring.prototype._init = function(gl) {
     var vs;
 
-    // Top plate
-    vs = yinch.glUtils.makePlate(this.segments, INNER_RADIUS, OUTER_RADIUS);
+    // Top ring
+    vs = yinch.glUtils.makeFlatRing(this.segments, INNER_RADIUS, OUTER_RADIUS);
     yinch.glUtils.addToVertArray(vs, [0, 0, THICKNESS]);
     vs = yinch.glUtils.flatten(vs);
 
     this.geometry.push(new yinch.Geometry(gl, vs));
 
-    // Bottom plate
-    vs = yinch.glUtils.makePlate(this.segments, INNER_RADIUS, OUTER_RADIUS);
+    // Bottom ring
+    vs = yinch.glUtils.makeFlatRing(this.segments, INNER_RADIUS, OUTER_RADIUS);
     vs = yinch.glUtils.flatten(vs);
 
     this.geometry.push(new yinch.Geometry(gl, vs));
