@@ -107,9 +107,6 @@ goog.provide('yinch.glBridge');
       this._drawables.push(new yinch.Board3d(this._gl));
       this._drawables.push(this._cr);
 
-      gt = new yinch.Tile(this._gl, 'white');
-      this._drawables.push(gt);
-
       this._bindHandlers();
 
       this.start();
@@ -334,8 +331,6 @@ goog.provide('yinch.glBridge');
       if (status.status !== 'success') {
         return;
       }
-
-
     },
     registerInteractionCallback: function(cb) {
       this._interactionCallback = cb;
@@ -402,6 +397,13 @@ goog.provide('yinch.glBridge');
     _moveRing: function(move) {
       var ring = this._findPieceAtGridCoords(move.start);
       ring.setGridPos(move.stop[0], move.stop[1]);
+
+      var tile = new yinch.Tile(this._gl, move.player, QUALITY);
+      tile.setGridPos.apply(tile, move.start);
+      this._drawables.push(tile);
+
+      var animation = tile.drop(2.0);
+      this._tickables.push(animation);
     },
     _startRingMove: function(gridCoords) {
       var piece = this._findPieceAtGridCoords(gridCoords);
