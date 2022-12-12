@@ -10,6 +10,8 @@ pkgs.stdenv.mkDerivation rec {
     echo "{:user {:local-repo \"$LEIN_HOME\"}}" > $LEIN_HOME/profiles.clj
 
     ${pkgs.leiningen}/bin/lein cljsbuild deps
+
+    find .lein -type f -regex '.+_remote\.repositories' -delete
   '';
   installPhase = ''
     mkdir -p $out
@@ -17,6 +19,6 @@ pkgs.stdenv.mkDerivation rec {
   '';
   outputHashAlgo = "sha256";
   outputHashMode = "recursive";
-  outputHash = "2BC0R6bZi+FIzkZuoDgf7quG3W1lC9hcwpaZ1SMaNVE=";
+  outputHash = "GA9Y7Cov3fq/BAJaYGzhIpk3FiaJ0MxfiTJlWc8i0kc=";
 }
 
