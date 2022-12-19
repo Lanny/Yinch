@@ -23,6 +23,7 @@
   :aliases {"cljs-repl" ["with-profile" "cljs-repl" "run"]
             "test-build" ["with-profile" "test-build" "run"]}
   :ring {:handler yinch.routes/app}
+
   :cljsbuild {:repl-listen-port 9000
               :repl-launch-commands
               {"chrome" ["chrome"

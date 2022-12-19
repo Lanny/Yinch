@@ -2,12 +2,13 @@ with import <nixpkgs> {};
 pkgs.stdenv.mkDerivation rec {
   name = "yinch-deps";
   buildInputs = [ pkgs.leiningen ];
-  srcs = ./.;
+  src = nix-gitignore.gitignoreSourcePure "!project.clj" ./.;
+
   buildPhase = ''
     export HOME=$PWD
     export LEIN_HOME=$HOME/.lein
     mkdir -p $LEIN_HOME
-    echo "{:user {:local-repo \"$LEIN_HOME\"}}" > $LEIN_HOME/profiles.clj
+    echo "{:user {:local-repo \"$LEIN_HOME/.m2\"}}" > $LEIN_HOME/profiles.clj
 
     ${pkgs.leiningen}/bin/lein cljsbuild deps
 
@@ -15,10 +16,10 @@ pkgs.stdenv.mkDerivation rec {
   '';
   installPhase = ''
     mkdir -p $out
-    cp -r .lein/* $out/
+    cp -r .lein/.m2/* $out/
   '';
   outputHashAlgo = "sha256";
   outputHashMode = "recursive";
-  outputHash = "GA9Y7Cov3fq/BAJaYGzhIpk3FiaJ0MxfiTJlWc8i0kc=";
+  outputHash = "Wj08iS1Fk1VVnrXSPrsvk8ahVnVm/gHB1g0OwtiUK2Y=";
 }
 
